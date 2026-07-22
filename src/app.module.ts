@@ -1,23 +1,42 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './user .entity';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
-@Module({
-  imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '1234',
-      database: 'mobile_crm',
-      entities: [User],
-      synchronize: true,
-    }),
-  ],
-  providers: [UserService],
+import { Module } from "@nestjs/common";
 
-  controllers: [UserController],
+import { UserController } from "./user.controller";
+import { UserService } from "./user.service";
+
+import { SmsController } from "./sms.controller";
+import { SmsService } from "./sms.service";
+import { PrismaService } from './prisma.service';
+import { SalesController } from "./uploads/sales.controller";
+import { SalesService } from "./uploads/sales.service";
+import { DashboardModule } from "./invoice/dashboard/dashboard.module";
+import { ExcelController } from "./uploads/excel.controller";
+import { InvoiceModule } from "./invoice/invoice.module";
+import { PrismaModule } from "./prisma.module";
+
+
+@Module({
+imports: [
+
+  PrismaModule,
+
+  DashboardModule,
+
+  InvoiceModule,
+
+],
+
+  controllers: [
+    UserController,
+    SmsController,
+    SalesController,
+    ExcelController,
+  ],
+
+  providers: [
+    UserService,
+    SmsService,
+    SalesService,
+    PrismaService, 
+  ],
 })
 export class AppModule {}

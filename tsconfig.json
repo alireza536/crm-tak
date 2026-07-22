@@ -1,17 +1,21 @@
 {
-  "compilerOptions": { 
+  "compilerOptions": {
     "module": "commonjs",
-    "target": "es2017",
-    "moduleResolution": "node",
+    "rootDir": "./src",
     "ignoreDeprecations": "6.0",
-
-    "types": ["node"],
-
-    "experimentalDecorators": true,
+    "declaration": false,
+    "removeComments": true,
     "emitDecoratorMetadata": true,
-
-    "strict": false,
-    "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "include": ["src/**/*", "src/prisma.service.ts"],
+  "exclude": ["node_modules"]
 }
