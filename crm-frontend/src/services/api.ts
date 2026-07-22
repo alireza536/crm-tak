@@ -1,50 +1,48 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:3001",
-});
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://crm-tak.onrender.com";
 
+const api = axios.create({
+  baseURL: API_URL,
+});
 
 export default api;
 
-export async function getDashboard() {
-  const res = await api.get("/dashboard");
-  return res.data;
+export async function getDashboard(): Promise<any> {
+  const response = await api.get("/dashboard");
+  return response.data;
 }
 
-export async function getSalesChart() {
-  const res = await api.get("/dashboard/sales-chart");
-  return res.data;
+export async function getSalesChart(): Promise<any[]> {
+  const response = await api.get("/dashboard/sales-chart");
+  return response.data;
 }
 
-export async function getInvoices() {
-  const res = await api.get("/invoice");
-  return res.data;
+export async function getInvoices(): Promise<any[]> {
+  const response = await api.get("/invoice");
+  return response.data;
 }
 
-export async function getCustomers() {
-  const res = await api.get("/user/customers");
-  return res.data;
+export async function getCustomers(): Promise<any[]> {
+  const response = await api.get("/user/customers");
+  return response.data;
 }
 
-export async function getCustomerProfile(id: number) {
-  const res = await api.get(`/user/profile/${id}`);
-  return res.data;
+export async function getCustomerProfile(id: number): Promise<any> {
+  const response = await api.get(`/user/profile/${id}`);
+  return response.data;
 }
-export async function uploadCustomers(file: File) {
 
+export async function uploadCustomers(file: File): Promise<any> {
   const formData = new FormData();
-
   formData.append("file", file);
 
-  const res = await fetch(
-    "http://localhost:3000/customer/upload",
-    {
-      method: "POST",
-      body: formData,
-    }
-  );
+  const response = await api.post("/customer/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-  return res.json();
-
+  return response.data;
 }
