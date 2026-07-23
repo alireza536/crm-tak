@@ -89,6 +89,12 @@ export default function Sidebar() {
       path: "/tasks",
     },
     {
+      title: "قیف فروش",
+      subtitle: "فرصت‌ها و مراحل معامله",
+      icon: <FaChartLine />,
+      path: "/pipeline",
+    },
+    {
       title: "مرکز ورود اطلاعات",
       subtitle: "فروش و مشتریان",
       icon: <FaFileArrowUp />,

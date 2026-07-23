@@ -17,6 +17,7 @@ import FollowUpCenter from "./pages/FollowUpCenter";
 import CampaignCenter from "./pages/CampaignCenter";
 import ReportsCenter from "./pages/ReportsCenter";
 import TaskPlanner from "./pages/TaskPlanner";
+import SalesPipeline from "./pages/SalesPipeline";
 
 import "./App.css";
 
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/campaigns" element={<CampaignCenter />} />
             <Route path="/reports" element={<ReportsCenter />} />
             <Route path="/tasks" element={<TaskPlanner />} />
+            <Route path="/pipeline" element={<SalesPipeline />} />
             <Route path="/upload" element={<UploadSales />} />
             <Route path="/customer-upload" element={<CustomerUpload />} />
             <Route path="/sms" element={<Sms />} />
