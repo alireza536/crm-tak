@@ -1,4 +1,5 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import {
   FaArrowRotateRight,
   FaArrowUp,
