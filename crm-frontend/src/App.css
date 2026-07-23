@@ -1,70 +1,110 @@
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:IRANSansX, Vazirmatn, sans-serif;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: IRANSansX, Vazirmatn, sans-serif;
 }
 
-body{
-
-background:#f3f6f4;
-
-direction:rtl;
-
-overflow:hidden;
-
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
 }
 
-a{
-
-text-decoration:none;
-
-color:inherit;
-
+html {
+  direction: rtl;
+  background: #f3f6f4;
 }
 
-.layout{
-
-display:flex;
-
-flex-direction:row-reverse;
-
-height:100vh;
-
-width:100%;
-
-background:#f3f6f4;
-
+body {
+  min-height: 100vh;
+  overflow: hidden;
+  background: #f3f6f4;
 }
 
-.mainContent{
-
-flex:1;
-
-overflow-y:auto;
-
-padding:30px;
-
-background:#f3f6f4;
-
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
-::-webkit-scrollbar{
-
-width:8px;
-
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-::-webkit-scrollbar-thumb{
-
-background:#0f6a47;
-
-border-radius:20px;
-
+.layout {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: row-reverse;
+  direction: ltr;
+  overflow: hidden;
+  background: #f3f6f4;
 }
 
-::-webkit-scrollbar-track{
+.mainContent {
+  min-width: 0;
+  flex: 1;
+  padding: 28px;
+  direction: rtl;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(15, 106, 71, 0.035), transparent 28%),
+    #f3f6f4;
+}
 
-background:#ececec;
+.crmSidebar {
+  direction: rtl;
+}
 
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 20px;
+  background: #8caf9f;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 1100px) {
+  .mainContent {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+
+  .layout {
+    min-height: 100dvh;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  .mainContent {
+    min-height: 100dvh;
+    padding: 75px 16px 25px;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 520px) {
+  .mainContent {
+    padding-inline: 12px;
+  }
 }

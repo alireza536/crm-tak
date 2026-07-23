@@ -1,207 +1,384 @@
-.sidebar{
-
-width:280px;
-
-height:100vh;
-
-background:#0F6A47;
-
-display:flex;
-
-flex-direction:column;
-
-align-items:center;
-
-padding:30px 20px;
-
-color:white;
-
-position:sticky;
-
-top:0;
-
-right:0;
-
-box-shadow:-5px 0 25px rgba(0,0,0,.15);
-
-z-index:999;
-
+.crmSidebar {
+  --sidebar-width: 276px;
+  --sidebar-collapsed: 86px;
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  height: 100vh;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+  overflow: hidden;
+  color: #f6fff9;
+  background:
+    radial-gradient(circle at 25% -10%, rgba(60, 221, 153, 0.2), transparent 32%),
+    linear-gradient(180deg, #105a40 0%, #083d2c 100%);
+  box-shadow: -10px 0 30px rgba(7, 48, 33, 0.13);
+  transition:
+    width 0.25s ease,
+    min-width 0.25s ease,
+    transform 0.25s ease;
 }
 
-.logo{
-
-width:110px;
-
-height:110px;
-
-object-fit:contain;
-
-margin-bottom:15px;
-
+.crmSidebar * {
+  box-sizing: border-box;
 }
 
-.sidebar h2{
-
-font-size:26px;
-
-margin-bottom:30px;
-
-font-weight:700;
-
-letter-spacing:1px;
-
+.crmBrand {
+  min-height: 65px;
+  padding: 2px 5px 14px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.profileBox{
-
-display:flex;
-
-flex-direction:column;
-
-align-items:center;
-
-margin-bottom:35px;
-
+.crmBrandMark {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 15px;
+  background: linear-gradient(135deg, #35d793, #19a86d);
+  box-shadow: 0 9px 20px rgba(24, 176, 112, 0.23);
 }
 
-.profileImg{
-
-width:90px;
-
-height:90px;
-
-border-radius:50%;
-
-border:4px solid rgba(255,255,255,.3);
-
-object-fit:cover;
-
-margin-bottom:12px;
-
+.crmBrandMark span {
+  color: white;
+  font-size: 13px;
+  font-weight: 1000;
+  letter-spacing: -0.8px;
 }
 
-.profileBox h3{
-
-font-size:18px;
-
-margin-bottom:4px;
-
+.crmBrandInfo,
+.crmAccountInfo,
+.crmMenuText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.profileBox p{
-
-font-size:13px;
-
-opacity:.8;
-
+.crmBrandInfo strong {
+  font-size: 16px;
 }
 
-.sidebar nav{
-
-width:100%;
-
-display:flex;
-
-flex-direction:column;
-
-gap:12px;
-
-margin-top:15px;
-
+.crmBrandInfo small {
+  margin-top: 3px;
+  color: rgba(238, 255, 247, 0.56);
+  font-size: 9px;
 }
 
-.menuItem{
-
-display:flex;
-
-align-items:center;
-
-gap:14px;
-
-padding:15px 18px;
-
-border-radius:14px;
-
-font-size:15px;
-
-transition:.25s;
-
-color:white;
-
+.crmAccount {
+  min-height: 63px;
+  margin: 15px 1px 10px;
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 39px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
 }
 
-.menuItem svg{
-
-font-size:20px;
-
+.crmAccountAvatar {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
 }
 
-.menuItem:hover{
-
-background:rgba(255,255,255,.12);
-
-transform:translateX(-4px);
-
+.crmAccountInfo strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.menuItem.active{
-
-background:white;
-
-color:#0F6A47;
-
-font-weight:bold;
-
-box-shadow:0 8px 20px rgba(0,0,0,.12);
-
+.crmAccountInfo small {
+  margin-top: 3px;
+  color: rgba(238, 255, 247, 0.52);
+  font-size: 8px;
 }
 
-.menuItem.active svg{
-
-color:#0F6A47;
-
+.crmOnlineDot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #10523b;
+  border-radius: 50%;
+  background: #4ae3a1;
+  box-shadow: 0 0 0 3px rgba(74, 227, 161, 0.13);
 }
 
-@media(max-width:900px){
-
-.sidebar{
-
-width:90px;
-
-padding:20px 10px;
-
+.crmMenuTitle {
+  padding: 7px 11px;
+  color: rgba(238, 255, 247, 0.34);
+  font-size: 8px;
+  font-weight: 800;
 }
 
-.sidebar h2{
-
-display:none;
-
+.crmMenu {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
-.profileBox{
-
-display:none;
-
+.crmMenu::-webkit-scrollbar {
+  display: none;
 }
 
-.menuItem span{
-
-display:none;
-
+.crmMenuItem,
+.crmLogout {
+  width: 100%;
+  min-height: 50px;
+  padding: 7px 9px;
+  display: grid;
+  grid-template-columns: 37px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  color: rgba(245, 255, 250, 0.76);
+  text-align: right;
+  transition: 0.18s ease;
 }
 
-.menuItem{
-
-justify-content:center;
-
+.crmMenuItem:hover,
+.crmLogout:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.075);
 }
 
-.logo{
-
-width:60px;
-
-height:60px;
-
+.crmMenuItem.active {
+  border-color: rgba(255, 255, 255, 0.13);
+  background: linear-gradient(
+    90deg,
+    rgba(54, 215, 148, 0.22),
+    rgba(255, 255, 255, 0.08)
+  );
+  color: white;
+  box-shadow: inset 3px 0 0 #3bd995;
 }
 
+.crmMenuIcon {
+  width: 37px;
+  height: 37px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.075);
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 14px;
+}
+
+.crmMenuItem.active .crmMenuIcon {
+  background: #3bd995;
+  color: #073d2a;
+}
+
+.crmMenuText strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crmMenuText small {
+  max-width: 100%;
+  margin-top: 3px;
+  overflow: hidden;
+  color: rgba(238, 255, 247, 0.48);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crmMenuArrow {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 8px;
+}
+
+.crmSidebarFooter {
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.crmLogout {
+  cursor: pointer;
+  font: inherit;
+}
+
+.crmLogout:hover {
+  color: #ffd4d4;
+  background: rgba(208, 74, 74, 0.12);
+}
+
+.crmCollapse {
+  height: 36px;
+  margin-top: 4px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(238, 255, 247, 0.52);
+  cursor: pointer;
+  font: inherit;
+  font-size: 8px;
+}
+
+.crmCollapse svg {
+  font-size: 8px;
+  transition: transform 0.25s ease;
+}
+
+.crmSidebar.collapsed {
+  width: var(--sidebar-collapsed);
+  min-width: var(--sidebar-collapsed);
+}
+
+.crmSidebar.collapsed .crmBrand {
+  grid-template-columns: 48px;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.crmSidebar.collapsed .crmBrandInfo,
+.crmSidebar.collapsed .crmAccountInfo,
+.crmSidebar.collapsed .crmOnlineDot,
+.crmSidebar.collapsed .crmMenuText,
+.crmSidebar.collapsed .crmMenuArrow,
+.crmSidebar.collapsed .crmMenuTitle,
+.crmSidebar.collapsed .crmCollapse span {
+  display: none;
+}
+
+.crmSidebar.collapsed .crmAccount {
+  grid-template-columns: 39px;
+  justify-content: center;
+  padding-inline: 8px;
+}
+
+.crmSidebar.collapsed .crmMenuItem,
+.crmSidebar.collapsed .crmLogout {
+  grid-template-columns: 37px;
+  justify-content: center;
+  padding-inline: 8px;
+}
+
+.crmSidebar.collapsed .crmCollapse svg {
+  transform: rotate(180deg);
+}
+
+.crmMobileMenu,
+.crmMobileClose,
+.crmSidebarOverlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .crmSidebar,
+  .crmSidebar.collapsed {
+    width: min(276px, 86vw);
+    min-width: min(276px, 86vw);
+    height: 100dvh;
+    position: fixed;
+    transform: translateX(105%);
+  }
+
+  .crmSidebar.mobileOpen {
+    transform: translateX(0);
+  }
+
+  .crmSidebar.collapsed .crmBrandInfo,
+  .crmSidebar.collapsed .crmAccountInfo,
+  .crmSidebar.collapsed .crmOnlineDot,
+  .crmSidebar.collapsed .crmMenuText,
+  .crmSidebar.collapsed .crmMenuArrow,
+  .crmSidebar.collapsed .crmMenuTitle {
+    display: flex;
+  }
+
+  .crmSidebar.collapsed .crmBrand {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+
+  .crmSidebar.collapsed .crmAccount {
+    grid-template-columns: 39px minmax(0, 1fr) auto;
+  }
+
+  .crmSidebar.collapsed .crmMenuItem,
+  .crmSidebar.collapsed .crmLogout {
+    grid-template-columns: 37px minmax(0, 1fr) auto;
+  }
+
+  .crmCollapse {
+    display: none;
+  }
+
+  .crmMobileMenu {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 950;
+    border: 1px solid #dce6e1;
+    border-radius: 13px;
+    background: white;
+    color: #0f6a47;
+    box-shadow: 0 8px 22px rgba(22, 60, 43, 0.12);
+    cursor: pointer;
+  }
+
+  .crmMobileClose {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.07);
+    color: white;
+    cursor: pointer;
+  }
+
+  .crmBrand {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+
+  .crmSidebarOverlay {
+    inset: 0;
+    display: block;
+    position: fixed;
+    z-index: 990;
+    border: 0;
+    background: rgba(6, 28, 19, 0.48);
+    backdrop-filter: blur(4px);
+  }
 }

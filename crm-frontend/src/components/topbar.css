@@ -1,141 +1,690 @@
-.topbar{
+.globalTopbar {
+  --topbar-surface: rgba(255, 255, 255, 0.92);
+  --topbar-text: #17231e;
+  --topbar-muted: #74817b;
+  --topbar-line: #e1e9e5;
+  --topbar-primary: #0f6a47;
+  --topbar-soft: #eaf7f1;
 
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-bottom:35px;
-
-background:white;
-
-padding:22px 30px;
-
-border-radius:20px;
-
-box-shadow:0 8px 25px rgba(0,0,0,.08);
-
+  min-height: 78px;
+  margin-bottom: 22px;
+  padding: 12px 14px 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  position: sticky;
+  top: -1px;
+  z-index: 800;
+  border: 1px solid var(--topbar-line);
+  border-radius: 18px;
+  background: var(--topbar-surface);
+  box-shadow: 0 8px 30px rgba(26, 58, 43, 0.06);
+  backdrop-filter: blur(18px);
 }
 
-.topbar h1{
-
-font-size:30px;
-
-color:#0F6A47;
-
-margin-bottom:5px;
-
+.topbarPageInfo {
+  min-width: 185px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.topbar p{
-
-color:#777;
-
-font-size:14px;
-
+.topbarBreadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--topbar-muted);
+  font-size: 9px;
 }
 
-.topbarRight{
-
-display:flex;
-
-align-items:center;
-
-gap:15px;
-
+.topbarBreadcrumb i {
+  opacity: 0.45;
+  font-style: normal;
 }
 
-.searchBox{
-
-display:flex;
-
-align-items:center;
-
-gap:10px;
-
-background:#f3f5f7;
-
-padding:12px 18px;
-
-border-radius:12px;
-
-width:300px;
-
+.topbarBreadcrumb strong {
+  color: var(--topbar-primary);
+  font-weight: 800;
 }
 
-.searchBox input{
-
-border:none;
-
-background:none;
-
-outline:none;
-
-width:100%;
-
-font-size:14px;
-
+.topbarPageTitle {
+  margin-top: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
-.iconButton{
-
-width:45px;
-
-height:45px;
-
-border-radius:12px;
-
-background:#f3f5f7;
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-cursor:pointer;
-
-transition:.3s;
-
+.topbarPageTitle h1 {
+  color: var(--topbar-text);
+  font-size: 19px;
+  line-height: 1.3;
 }
 
-.iconButton:hover{
-
-background:#0F6A47;
-
-color:white;
-
+.topbarPageTitle span {
+  color: var(--topbar-muted);
+  font-size: 9px;
+  white-space: nowrap;
 }
 
-.topbarProfile{
-
-width:48px;
-
-height:48px;
-
-border-radius:50%;
-
-object-fit:cover;
-
-border:3px solid #0F6A47;
-
+.topbarTools {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
-@media(max-width:900px){
-
-.topbar{
-
-flex-direction:column;
-
-gap:20px;
-
+.globalSearch {
+  width: min(355px, 28vw);
+  height: 45px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--topbar-line);
+  border-radius: 13px;
+  background: rgba(247, 250, 248, 0.86);
+  color: #839089;
+  transition: 0.18s ease;
 }
 
-.searchBox{
-
-width:100%;
-
+.globalSearch:focus-within {
+  border-color: #93c9b3;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(15, 106, 71, 0.07);
 }
 
+.globalSearch input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--topbar-text);
+  font: inherit;
+  font-size: 10px;
+}
+
+.globalSearch kbd {
+  padding: 3px 5px;
+  border: 1px solid #dfe6e2;
+  border-radius: 6px;
+  background: white;
+  color: #89948f;
+  font-family: inherit;
+  font-size: 7px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(20, 48, 35, 0.04);
+}
+
+.topbarIconButton,
+.quickAddButton,
+.profileButton {
+  height: 45px;
+  border: 1px solid var(--topbar-line);
+  border-radius: 13px;
+  background: white;
+  color: #55635c;
+  cursor: pointer;
+  font: inherit;
+  transition: 0.18s ease;
+}
+
+.topbarIconButton {
+  width: 45px;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.topbarIconButton:hover,
+.topbarIconButton.active,
+.profileButton:hover,
+.profileButton.active {
+  border-color: #b6d4c7;
+  color: var(--topbar-primary);
+  background: #f8fcfa;
+}
+
+.themeButton {
+  color: #776842;
+}
+
+.notificationDot {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  border: 2px solid white;
+  border-radius: 8px;
+  background: #e35858;
+  color: white;
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.quickAddButton {
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-color: transparent;
+  background: linear-gradient(135deg, #0f6a47, #11885b);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow: 0 9px 18px rgba(15, 106, 71, 0.17);
+}
+
+.quickAddButton:hover,
+.quickAddButton.active {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 23px rgba(15, 106, 71, 0.22);
+}
+
+.quickAddButton svg:last-child {
+  font-size: 7px;
+  opacity: 0.75;
+}
+
+.profileButton {
+  min-width: 143px;
+  padding: 0 9px;
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  text-align: right;
+}
+
+.profileAvatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #24b97e, #0f6a47);
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.profileAvatar.large {
+  width: 43px;
+  height: 43px;
+  border-radius: 13px;
+  font-size: 15px;
+}
+
+.profileText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.profileText strong {
+  color: var(--topbar-text);
+  font-size: 10px;
+}
+
+.profileText small {
+  margin-top: 2px;
+  color: var(--topbar-muted);
+  font-size: 7px;
+}
+
+.profileButton > svg {
+  color: #94a099;
+  font-size: 7px;
+}
+
+.topbarDropdownWrapper {
+  position: relative;
+}
+
+.topbarDropdown {
+  min-width: 270px;
+  padding: 9px;
+  position: absolute;
+  top: calc(100% + 11px);
+  left: 0;
+  z-index: 1000;
+  border: 1px solid var(--topbar-line);
+  border-radius: 16px;
+  background: var(--topbar-surface);
+  box-shadow: 0 20px 50px rgba(20, 48, 35, 0.16);
+  animation: topbarDropdownIn 0.16s ease;
+  backdrop-filter: blur(18px);
+}
+
+@keyframes topbarDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notificationDropdown {
+  width: 335px;
+}
+
+.dropdownHeader {
+  padding: 7px 7px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--topbar-line);
+}
+
+.dropdownHeader > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dropdownHeader strong {
+  color: var(--topbar-text);
+  font-size: 12px;
+}
+
+.dropdownHeader span {
+  margin-top: 2px;
+  color: var(--topbar-muted);
+  font-size: 8px;
+}
+
+.dropdownHeader button {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #8a9690;
+  cursor: pointer;
+}
+
+.dropdownHeader button:hover {
+  background: #f0f4f2;
+}
+
+.notificationList {
+  padding: 5px 0;
+}
+
+.notificationItem {
+  width: 100%;
+  padding: 10px 7px;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: flex-start;
+  gap: 9px;
+  border: 0;
+  border-bottom: 1px solid #edf1ef;
+  background: transparent;
+  cursor: pointer;
+  text-align: right;
+}
+
+.notificationItem:last-child {
+  border-bottom: 0;
+}
+
+.notificationItem:hover {
+  border-radius: 11px;
+  background: #f7faf8;
+}
+
+.notificationItem.important {
+  background: #fffafa;
+}
+
+.notificationIcon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--topbar-soft);
+  color: var(--topbar-primary);
+  font-size: 12px;
+}
+
+.notificationItem.important .notificationIcon {
+  background: #ffeded;
+  color: #d95b5b;
+}
+
+.notificationItem > span:last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.notificationItem strong {
+  color: var(--topbar-text);
+  font-size: 9px;
+}
+
+.notificationItem small {
+  margin-top: 3px;
+  color: var(--topbar-muted);
+  font-size: 7px;
+  line-height: 1.7;
+}
+
+.notificationItem time {
+  margin-top: 4px;
+  color: #9ba69f;
+  font-size: 7px;
+}
+
+.dropdownFooterButton {
+  width: 100%;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--topbar-soft);
+  color: var(--topbar-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.quickDropdown {
+  width: 285px;
+}
+
+.dropdownLabel {
+  padding: 5px 7px 9px;
+  display: block;
+  color: var(--topbar-muted);
+  font-size: 8px;
+}
+
+.quickMenuItem {
+  padding: 8px 7px;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 9px;
+  border-radius: 11px;
+  transition: 0.15s ease;
+}
+
+.quickMenuItem:hover {
+  background: #f6faf8;
+}
+
+.quickMenuIcon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  font-size: 13px;
+}
+
+.quickMenuIcon.green {
+  background: #e5f7ee;
+  color: #18865e;
+}
+
+.quickMenuIcon.blue {
+  background: #eaf2ff;
+  color: #3b74d7;
+}
+
+.quickMenuIcon.orange {
+  background: #fff2e3;
+  color: #d98631;
+}
+
+.quickMenuIcon.purple {
+  background: #f1ebff;
+  color: #7956ce;
+}
+
+.quickMenuItem > span:last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.quickMenuItem strong {
+  color: var(--topbar-text);
+  font-size: 9px;
+}
+
+.quickMenuItem small {
+  margin-top: 3px;
+  color: var(--topbar-muted);
+  font-size: 7px;
+}
+
+.profileDropdown {
+  width: 230px;
+}
+
+.profileDropdownHeader {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--topbar-line);
+}
+
+.profileDropdownHeader > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.profileDropdownHeader strong {
+  color: var(--topbar-text);
+  font-size: 11px;
+}
+
+.profileDropdownHeader span {
+  margin-top: 3px;
+  color: var(--topbar-muted);
+  font-size: 8px;
+}
+
+.profileDropdown > a,
+.logoutMenuButton {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--topbar-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+}
+
+.profileDropdown > a:hover {
+  background: #f4f8f6;
+}
+
+.logoutMenuButton {
+  margin-top: 4px;
+  border-top: 1px solid var(--topbar-line);
+  border-radius: 0 0 9px 9px;
+  color: #d25353;
+}
+
+.crmDark {
+  color-scheme: dark;
+}
+
+.crmDark body,
+.crmDark .layout,
+.crmDark .mainContent {
+  background: #101713;
+}
+
+.crmDark .mainContent {
+  background:
+    radial-gradient(circle at 15% 0%, rgba(52, 201, 140, 0.045), transparent 28%),
+    #101713;
+}
+
+.crmDark .globalTopbar {
+  --topbar-surface: rgba(24, 34, 29, 0.94);
+  --topbar-text: #edf8f2;
+  --topbar-muted: #8d9d95;
+  --topbar-line: #2b3932;
+  --topbar-soft: #193c2e;
+}
+
+.crmDark .globalSearch,
+.crmDark .topbarIconButton,
+.crmDark .profileButton {
+  background: #16221c;
+}
+
+.crmDark .globalSearch:focus-within {
+  background: #192820;
+}
+
+.crmDark .globalSearch kbd {
+  border-color: #33433b;
+  background: #24312b;
+}
+
+.crmDark .notificationItem:hover,
+.crmDark .quickMenuItem:hover,
+.crmDark .profileDropdown > a:hover {
+  background: #202e27;
+}
+
+.crmDark .notificationItem.important {
+  background: rgba(150, 54, 54, 0.1);
+}
+
+/* داشبورد مرحله اول هدر داخلی داشت؛ با Topbar سراسری مخفی می‌شود. */
+.premiumDashboard > .dashboardHeader {
+  display: none;
+}
+
+@media (max-width: 1250px) {
+  .profileButton {
+    min-width: 45px;
+    width: 45px;
+    grid-template-columns: 34px;
+    padding: 0 5px;
+  }
+
+  .profileText,
+  .profileButton > svg {
+    display: none;
+  }
+
+  .globalSearch {
+    width: min(310px, 30vw);
+  }
+}
+
+@media (max-width: 980px) {
+  .globalTopbar {
+    position: relative;
+    top: 0;
+    flex-wrap: wrap;
+  }
+
+  .topbarPageInfo {
+    width: 100%;
+  }
+
+  .topbarTools {
+    width: 100%;
+  }
+
+  .globalSearch {
+    flex: 1;
+    width: auto;
+  }
+}
+
+@media (max-width: 650px) {
+  .globalTopbar {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .topbarPageTitle span,
+  .globalSearch kbd,
+  .quickAddButton span,
+  .quickAddButton svg:last-child {
+    display: none;
+  }
+
+  .quickAddButton {
+    width: 45px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .themeButton {
+    display: none;
+  }
+
+  .topbarTools {
+    gap: 6px;
+  }
+
+  .topbarDropdown {
+    position: fixed;
+    top: 82px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+/* Phase 6: compact topbar profile */
+.profileButton {
+  min-width: 46px;
+  width: 46px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  place-items: center;
+  border-radius: 13px;
+}
+
+.profileButton .profileAvatar {
+  width: 29px;
+  height: 29px;
+  border-radius: 9px;
+  font-size: 10px;
+  box-shadow: 0 5px 12px rgba(15, 106, 71, 0.16);
+}
+
+.profileButton .profileText,
+.profileButton > svg {
+  display: none;
+}
+
+.profileDropdown .profileAvatar.large {
+  width: 39px;
+  height: 39px;
+  border-radius: 12px;
+  font-size: 13px;
 }

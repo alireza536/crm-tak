@@ -1,111 +1,232 @@
+import { useState, type ReactNode } from "react";
 import {
+  FaArrowRightFromBracket,
+  FaBars,
+  FaBell,
   FaChartPie,
-  FaUsers,
+  FaChartLine,
+  FaChartColumn,
+  FaBullhorn,
+  FaChevronLeft,
+  FaFileArrowUp,
   FaFileInvoiceDollar,
-  FaUpload,
-  FaSms,
-  FaCog,
-} from "react-icons/fa";
-
-import { Link, useLocation } from "react-router-dom";
-
-import logo from "../assets/logo.png";
-import profile from "../assets/logo.png";
+  FaGear,
+  FaMessage,
+  FaRobot,
+  FaUsers,
+  FaXmark,
+} from "react-icons/fa6";
+import { NavLink, useLocation } from "react-router-dom";
 
 import "./Sidebar.css";
 
+type MenuItem = {
+  title: string;
+  subtitle: string;
+  icon: ReactNode;
+  path: string;
+};
+
 export default function Sidebar() {
-
   const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const menu = [
+  const menu: MenuItem[] = [
     {
       title: "داشبورد",
+      subtitle: "نمای کلی کسب‌وکار",
       icon: <FaChartPie />,
       path: "/",
     },
     {
       title: "مشتریان",
+      subtitle: "مدیریت مشتریان",
       icon: <FaUsers />,
       path: "/customers",
     },
-    
-    {
-      title: "آپلود فروش",
-      icon: <FaUpload />,
-      path: "/upload",
-    },
     {
       title: "فاکتورها",
+      subtitle: "مدیریت فروش",
       icon: <FaFileInvoiceDollar />,
       path: "/invoices",
     },
     {
-      title: "پیامک",
-      icon: <FaSms />,
-      path: "/sms",
+      title: "هوش فروش",
+      subtitle: "تحلیل و فرصت‌ها",
+      icon: <FaChartLine />,
+      path: "/insights",
     },
     {
-  title: "بروزرسانی مشتریان",
-  icon: <FaUpload />,
-  path: "/customer-upload",
-},
-    
+      title: "دستیار هوشمند",
+      subtitle: "تحلیل و پاسخ مدیریتی",
+      icon: <FaRobot />,
+      path: "/ai-assistant",
+    },
     {
-      title: "تنظیمات",
-      icon: <FaCog />,
-      path: "/settings",
+      title: "مرکز پیگیری",
+      subtitle: "اعلان‌ها و کارهای مهم",
+      icon: <FaBell />,
+      path: "/follow-ups",
+    },
+    {
+      title: "کمپین فروش",
+      subtitle: "هدف‌گیری و پیام‌رسانی",
+      icon: <FaBullhorn />,
+      path: "/campaigns",
+    },
+    {
+      title: "گزارش‌ها",
+      subtitle: "تحلیل و خروجی مدیریتی",
+      icon: <FaChartColumn />,
+      path: "/reports",
+    },
+    {
+      title: "مرکز ورود اطلاعات",
+      subtitle: "فروش و مشتریان",
+      icon: <FaFileArrowUp />,
+      path: "/upload",
+    },
+    {
+      title: "پیامک",
+      subtitle: "ارسال و کمپین‌ها",
+      icon: <FaMessage />,
+      path: "/sms",
     },
   ];
 
+  const isActive = (path: string) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <aside className="sidebar">
+    <>
+      <button
+        className="crmMobileMenu"
+        type="button"
+        onClick={() => setMobileOpen(true)}
+        aria-label="باز کردن منو"
+      >
+        <FaBars />
+      </button>
 
-      <img
-        src={logo}
-        className="logo"
-      />
-      
-
-      <h2>TAK CRM</h2>
-
-      <div className="profileBox">
-
-        <img
-          src={profile}
-          className="profileImg"
+      {mobileOpen && (
+        <button
+          type="button"
+          className="crmSidebarOverlay"
+          onClick={() => setMobileOpen(false)}
+          aria-label="بستن منو"
         />
+      )}
 
-        <h3>Alireza</h3>
+      <aside
+        className={`crmSidebar ${collapsed ? "collapsed" : ""} ${
+          mobileOpen ? "mobileOpen" : ""
+        }`}
+      >
+        <div className="crmBrand">
+          <div className="crmBrandMark">
+            <span>TAK</span>
+          </div>
 
-        <p>Manager</p>
+          <div className="crmBrandInfo">
+            <strong>TAK CRM</strong>
+            <small>مدیریت هوشمند فروش</small>
+          </div>
 
-      </div>
-
-      <nav>
-
-        {menu.map((item) => (
-
-          <Link
-            key={item.path}
-            to={item.path}
-            className={
-              location.pathname === item.path
-                ? "menuItem active"
-                : "menuItem"
-            }
-            
+          <button
+            type="button"
+            className="crmMobileClose"
+            onClick={() => setMobileOpen(false)}
+            aria-label="بستن منو"
           >
-            {item.icon}
+            <FaXmark />
+          </button>
+        </div>
 
-            <span>{item.title}</span>
+        <div className="crmAccount">
+          <span className="crmAccountAvatar">A</span>
 
-          </Link>
+          <div className="crmAccountInfo">
+            <strong>مجموعه TAK</strong>
+            <small>مدیر سیستم</small>
+          </div>
 
-        ))}
+          <span className="crmOnlineDot" />
+        </div>
 
-      </nav>
+        <span className="crmMenuTitle">منوی مدیریت</span>
 
-    </aside>
+        <nav className="crmMenu">
+          {menu.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={() => setMobileOpen(false)}
+              className={
+                isActive(item.path)
+                  ? "crmMenuItem active"
+                  : "crmMenuItem"
+              }
+              title={collapsed ? item.title : undefined}
+            >
+              <span className="crmMenuIcon">{item.icon}</span>
+
+              <span className="crmMenuText">
+                <strong>{item.title}</strong>
+                <small>{item.subtitle}</small>
+              </span>
+
+              <FaChevronLeft className="crmMenuArrow" />
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="crmSidebarFooter">
+          <NavLink
+            to="/settings"
+            onClick={() => setMobileOpen(false)}
+            className={
+              isActive("/settings")
+                ? "crmMenuItem active"
+                : "crmMenuItem"
+            }
+            title={collapsed ? "تنظیمات" : undefined}
+          >
+            <span className="crmMenuIcon">
+              <FaGear />
+            </span>
+
+            <span className="crmMenuText">
+              <strong>تنظیمات</strong>
+              <small>تنظیمات حساب و سیستم</small>
+            </span>
+
+            <FaChevronLeft className="crmMenuArrow" />
+          </NavLink>
+
+          <button type="button" className="crmLogout">
+            <span className="crmMenuIcon">
+              <FaArrowRightFromBracket />
+            </span>
+
+            <span className="crmMenuText">
+              <strong>خروج از حساب</strong>
+              <small>پایان نشست کاربری</small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="crmCollapse"
+            onClick={() => setCollapsed((value) => !value)}
+          >
+            <FaChevronLeft />
+            <span>{collapsed ? "باز کردن منو" : "جمع کردن منو"}</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
