@@ -5,6 +5,7 @@ const API_URL =
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 120000,
 });
 
 export default api;
@@ -36,13 +37,11 @@ export async function getCustomerProfile(id: number): Promise<any> {
 
 export async function uploadCustomers(file: File): Promise<any> {
   const formData = new FormData();
+
+  // نام file باید با FileInterceptor('file') در بک‌اند یکی باشد
   formData.append("file", file);
 
-  const response = await api.post("/customer/upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const response = await api.post("/excel/upload", formData);
 
   return response.data;
 }
