@@ -8,6 +8,7 @@ import {
   FaChartColumn,
   FaCalendarCheck,
   FaBullhorn,
+  FaBoxesStacked,
   FaChevronLeft,
   FaFileArrowUp,
   FaFileInvoiceDollar,
@@ -93,6 +94,12 @@ export default function Sidebar() {
       subtitle: "فرصت‌ها و مراحل معامله",
       icon: <FaChartLine />,
       path: "/pipeline",
+    },
+    {
+      title: "انبار",
+      subtitle: "موجودی و گردش کالا",
+      icon: <FaBoxesStacked />,
+      path: "/inventory",
     },
     {
       title: "مرکز ورود اطلاعات",

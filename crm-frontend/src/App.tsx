@@ -18,6 +18,7 @@ import CampaignCenter from "./pages/CampaignCenter";
 import ReportsCenter from "./pages/ReportsCenter";
 import TaskPlanner from "./pages/TaskPlanner";
 import SalesPipeline from "./pages/SalesPipeline";
+import Inventory from "./pages/Inventory";
 
 import "./App.css";
 
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/reports" element={<ReportsCenter />} />
             <Route path="/tasks" element={<TaskPlanner />} />
             <Route path="/pipeline" element={<SalesPipeline />} />
+            <Route path="/inventory" element={<Inventory />} />
             <Route path="/upload" element={<UploadSales />} />
             <Route path="/customer-upload" element={<CustomerUpload />} />
             <Route path="/sms" element={<Sms />} />
