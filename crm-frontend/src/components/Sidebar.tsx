@@ -6,6 +6,7 @@ import {
   FaChartPie,
   FaChartLine,
   FaChartColumn,
+  FaCalendarCheck,
   FaBullhorn,
   FaChevronLeft,
   FaFileArrowUp,
@@ -80,6 +81,12 @@ export default function Sidebar() {
       subtitle: "تحلیل و خروجی مدیریتی",
       icon: <FaChartColumn />,
       path: "/reports",
+    },
+    {
+      title: "برنامه‌ریز",
+      subtitle: "وظایف و پیگیری روزانه",
+      icon: <FaCalendarCheck />,
+      path: "/tasks",
     },
     {
       title: "مرکز ورود اطلاعات",
