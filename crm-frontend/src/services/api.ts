@@ -37,11 +37,24 @@ export async function getCustomerProfile(id: number): Promise<any> {
 
 export async function uploadCustomers(file: File): Promise<any> {
   const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post("/excel/upload", formData);
+  return response.data;
+}
 
-  // نام file باید با FileInterceptor('file') در بک‌اند یکی باشد
+export async function uploadSalesInvoice(
+  file: File,
+  onProgress?: (percentage: number) => void,
+): Promise<any> {
+  const formData = new FormData();
   formData.append("file", file);
 
-  const response = await api.post("/excel/upload", formData);
+  const response = await api.post("/sales/upload", formData, {
+    onUploadProgress: (event) => {
+      if (!event.total || !onProgress) return;
+      onProgress(Math.round((event.loaded * 100) / event.total));
+    },
+  });
 
   return response.data;
 }
