@@ -13,29 +13,17 @@ import "./UploadSales.css";
 
 type ImportMode = "sales" | "customers";
 
-type InvoiceDetails = {
-  factor?: string;
-  date?: string;
-  phone?: string;
-  name?: string;
-  sale?: number;
-  discount?: number;
-};
-
 type ImportResult = {
   success?: boolean;
   duplicate?: boolean;
   message?: string;
-  extracted?: InvoiceDetails;
-  invoice?: {
+  extracted?: {
     factor?: string;
+    date?: string;
+    phone?: string;
+    name?: string;
     sale?: number;
     discount?: number;
-    createdAt?: string;
-    user?: {
-      name?: string;
-      phone?: string;
-    };
   };
 };
 
@@ -86,21 +74,8 @@ export default function UploadSales() {
         const response = await uploadCustomers(file);
         setResult({ success: true, message: response?.message || "اطلاعات مشتریان ثبت شد." });
       } else {
-        const response = (await uploadSalesInvoice(file, setProgress)) as ImportResult;
-        const invoice = response?.invoice;
-        const user = invoice?.user;
-
-        setResult({
-          ...response,
-          extracted: {
-            factor: response?.extracted?.factor || invoice?.factor,
-            date: response?.extracted?.date || invoice?.createdAt,
-            phone: response?.extracted?.phone || user?.phone,
-            name: response?.extracted?.name || user?.name,
-            sale: response?.extracted?.sale ?? invoice?.sale,
-            discount: response?.extracted?.discount ?? invoice?.discount,
-          },
-        });
+        const response = await uploadSalesInvoice(file, setProgress);
+        setResult(response);
       }
       setProgress(100);
     } catch (requestError: unknown) {

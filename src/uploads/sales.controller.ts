@@ -1,42 +1,32 @@
 import {
+  BadRequestException,
   Controller,
   Post,
   UploadedFile,
   UseInterceptors,
 } from "@nestjs/common";
-
 import { FileInterceptor } from "@nestjs/platform-express";
-
 import { SalesService } from "./sales.service";
-
 
 @Controller("sales")
 export class SalesController {
-
-  constructor(
-    private readonly salesService: SalesService,
-  ) {}
+  constructor(private readonly salesService: SalesService) {}
 
   @Post("upload")
-@UseInterceptors(FileInterceptor("file"))
-async upload(
-  @UploadedFile() file: any,
-) {
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: 15 * 1024 * 1024 },
+    }),
+  )
+  async  upload(@UploadedFile() file?: any) {
+    if (!file?.buffer) {
+      throw new BadRequestException("فایل اکسل ارسال نشده است.");
+    }
 
-  console.log("FILE RECEIVED:");
-  console.log(file.originalname);
+    if (!/\.(xlsx|xls)$/i.test(file.originalname)) {
+      throw new BadRequestException("فقط فایل XLS یا XLSX قابل قبول است.");
+    }
 
-  const data = await this.salesService.readExcel(
-    file.buffer,
-  );
-
-  console.log("EXCEL DATA:");
-  console.log(data);
-
-  return data;
-
-}
-    
-
+    return this.salesService.importInvoice(file.buffer, file.originalname);
   }
-
+}

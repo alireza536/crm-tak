@@ -1,334 +1,178 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import * as XLSX from "xlsx";
 import { PrismaService } from "../prisma.service";
 
 @Injectable()
 export class SalesService {
-  private findPhone(rows: any[][]): string {
+  constructor(private readonly prisma: PrismaService) {}
 
-  const labels = [
-    "شماره همراه",
-    "تلفن همراه",
-    "موبایل",
-    "تلفن",
-  ];
+  private normalizeDigits(value: unknown): string {
+    const map: Record<string, string> = {
+      "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
+      "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
+      "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+      "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
+    };
 
-  for (const label of labels) {
-
-    const pos = this.findText(rows, label);
-
-    if (!pos) continue;
-
-    // ---------- سمت راست ----------
-    for (let c = pos.col + 1; c < rows[pos.row].length; c++) {
-
-      const value = String(rows[pos.row][c] || "")
-        .replace(/\D/g, "");
-
-      if (value.length >= 10) {
-        return value.slice(-11);
-      }
-
-    }
-
-    // ---------- سمت چپ ----------
-    for (let c = pos.col - 1; c >= 0; c--) {
-
-      const value = String(rows[pos.row][c] || "")
-        .replace(/\D/g, "");
-
-      if (value.length >= 10) {
-        return value.slice(-11);
-      }
-
-    }
-
-    // ---------- ردیف پایین ----------
-    if (rows[pos.row + 1]) {
-
-      for (let c = 0; c < rows[pos.row + 1].length; c++) {
-
-        const value = String(rows[pos.row + 1][c] || "")
-          .replace(/\D/g, "");
-
-        if (value.length >= 10) {
-          return value.slice(-11);
-        }
-
-      }
-
-    }
-
+    return String(value ?? "").replace(/[۰-۹٠-٩]/g, (digit) => map[digit] ?? digit);
   }
 
-  return "";
-
-}
-
-  constructor(
-    private prisma: PrismaService,
-  ) {}
-
-  //------------------------------------
-  // تبدیل عدد
-  //------------------------------------
-
-  private toNumber(value: any): number {
-
-    return Number(
-
-      String(value)
-        .replace(/,/g, "")
-        .replace(/\//g, "")
-        .replace(/\s/g, "")
-        .trim()
-
-    ) || 0;
-
+  private cleanText(value: unknown): string {
+    return this.normalizeDigits(value).replace(/\s+/g, " ").trim();
   }
 
-  //------------------------------------
-  // پیدا کردن متن
-  //------------------------------------
+  private toNumber(value: unknown): number {
+    const normalized = this.normalizeDigits(value)
+      .replace(/[٬,]/g, "")
+      .replace(/[^0-9.-]/g, "")
+      .trim();
 
-  private findText(rows: any[][], keyword: string) {
+    const result = Number(normalized);
+    return Number.isFinite(result) ? result : 0;
+  }
 
-    for (let i = 0; i < rows.length; i++) {
-
-      for (let j = 0; j < rows[i].length; j++) {
-
-        const text = String(rows[i][j] || "").trim();
-
-        if (text.includes(keyword)) {
-
-          return {
-
-            row: i,
-
-            col: j,
-
-          };
-
-        }
-
-      }
-
+  private getCell(sheet: XLSX.WorkSheet, ...cells: string[]): string {
+    for (const cell of cells) {
+      const value = sheet[cell]?.v;
+      const text = this.cleanText(value);
+      if (text) return text;
     }
+    return "";
+  }
 
+  private findText(rows: unknown[][], keywords: string[]) {
+    for (let row = 0; row < rows.length; row += 1) {
+      for (let col = 0; col < (rows[row]?.length ?? 0); col += 1) {
+        const text = this.cleanText(rows[row][col]);
+        if (keywords.some((keyword) => text.includes(keyword))) {
+          return { row, col };
+        }
+      }
+    }
     return null;
-
   }
 
-  //------------------------------------
-  // پیدا کردن عدد کنار متن
-  //------------------------------------
+  private findNearbyNumber(rows: unknown[][], keywords: string[]): number {
+    const position = this.findText(rows, keywords);
+    if (!position) return 0;
 
-  private findValue(rows: any[][], keyword: string): number {
+    const candidates: unknown[] = [];
+    const currentRow = rows[position.row] ?? [];
 
-    const pos = this.findText(rows, keyword);
-
-    if (!pos) {
-
-      return 0;
-
+    for (let col = position.col + 1; col < currentRow.length; col += 1) {
+      candidates.push(currentRow[col]);
+    }
+    for (let col = position.col - 1; col >= 0; col -= 1) {
+      candidates.push(currentRow[col]);
+    }
+    for (let row = position.row + 1; row <= position.row + 3; row += 1) {
+      candidates.push(...(rows[row] ?? []));
     }
 
-    //------------------------------------
-    // ستون A همان ردیف
-    //------------------------------------
-
-    let value = this.toNumber(rows[pos.row][0]);
-
-    if (value > 0) {
-
-      return value;
-
-    }
-
-    //------------------------------------
-    // سمت راست
-    //------------------------------------
-
-    for (let c = pos.col + 1; c < rows[pos.row].length; c++) {
-
-      value = this.toNumber(rows[pos.row][c]);
-
-      if (value > 0) {
-
-        return value;
-
-      }
-
-    }
-
-    //------------------------------------
-    // سه ردیف پایین
-    //------------------------------------
-
-    for (let r = pos.row + 1; r <= pos.row + 3; r++) {
-
-      if (!rows[r]) continue;
-
-      for (let c = 0; c < rows[r].length; c++) {
-
-        value = this.toNumber(rows[r][c]);
-
-        if (value > 0) {
-
-          return value;
-
-        }
-
-      }
-
+    for (const candidate of candidates) {
+      const number = this.toNumber(candidate);
+      if (number > 0) return number;
     }
 
     return 0;
-
   }
-async readExcel(buffer: Buffer) {
 
-  const workbook = XLSX.read(buffer);
+  private normalizePhone(value: unknown): string {
+    let phone = this.normalizeDigits(value).replace(/\D/g, "");
+    if (phone.startsWith("98") && phone.length >= 12) phone = `0${phone.slice(2)}`;
+    if (phone.length > 11) phone = phone.slice(-11);
+    return phone;
+  }
 
-  const sheet =
-    workbook.Sheets[workbook.SheetNames[0]];
+  async importInvoice(buffer: Buffer, originalName: string) {
+    const workbook = XLSX.read(buffer, { type: "buffer", cellDates: false });
+    const firstSheetName = workbook.SheetNames[0];
 
-  const rows: any[][] = XLSX.utils.sheet_to_json(sheet, {
-
-    header: 1,
-
-    defval: "",
-
-  });
-
-//----------------------------------------
-// اطلاعات مشتری
-//----------------------------------------
-
-//----------------------------------------
-// اطلاعات مشتری (سلول‌های ثابت)
-//----------------------------------------
-
-//----------------------------------------
-// اطلاعات مشتری از سلول‌های ثابت
-//----------------------------------------
-
-function getCell(...cells: string[]) {
-  for (const cell of cells) {
-    const value = sheet[cell]?.v;
-    if (
-      value !== undefined &&
-      value !== null &&
-      String(value).trim() !== ""
-    ) {
-      return String(value).trim();
+    if (!firstSheetName) {
+      throw new BadRequestException("فایل اکسل هیچ برگه‌ای ندارد.");
     }
+
+    const sheet = workbook.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      header: 1,
+      defval: "",
+      raw: false,
+    });
+
+    const factor = this.getCell(sheet, "M6", "N6", "L6") ||
+      this.cleanText(this.findNearbyNumber(rows, ["شماره فاکتور", "شماره فاكتور"]));
+
+    const date = this.getCell(sheet, "M10", "N10", "L10");
+    const name = this.getCell(sheet, "X21", "W21", "Y21", "X22", "W22", "Y22");
+    const address = this.getCell(sheet, "D26", "C26", "E26");
+    const rawPhone = this.getCell(sheet, "E21", "D21", "F21", "E22", "D22", "F22");
+    const phone = this.normalizePhone(rawPhone);
+
+    const sale = this.findNearbyNumber(rows, ["جمع کل", "جمع كل", "مبلغ نهایی", "مبلغ نهايي"]);
+    const discount = this.findNearbyNumber(rows, ["جمع تخفیفات", "جمع تخفيفات", "تخفیف", "تخفيف"]);
+
+    if (!factor) {
+      throw new BadRequestException("شماره فاکتور در فایل پیدا نشد.");
+    }
+    if (!phone) {
+      throw new BadRequestException("شماره موبایل مشتری در فایل پیدا نشد.");
+    }
+    if (sale <= 0) {
+      throw new BadRequestException("مبلغ جمع کل فاکتور در فایل پیدا نشد.");
+    }
+
+    const duplicate = await this.prisma.invoice.findFirst({
+      where: { factor: String(factor) } as any,
+      include: { user: true },
+    });
+
+    if (duplicate) {
+      return {
+        success: true,
+        duplicate: true,
+        message: `فاکتور شماره ${factor} قبلاً ثبت شده و دوباره ذخیره نشد.`,
+        invoice: duplicate,
+      };
+    }
+
+    let user = await this.prisma.user.findFirst({ where: { phone } });
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          personCode: phone,
+          name: name || `مشتری ${phone}`,
+          phone,
+          address,
+        },
+      });
+    } else if ((!user.name || !user.address) && (name || address)) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name: user.name || name || `مشتری ${phone}`,
+          address: user.address || address || "",
+        },
+      });
+    }
+
+    const invoice = await this.prisma.invoice.create({
+      data: {
+        factor: String(factor),
+        sale,
+        discount,
+        userId: user.id,
+      } as any,
+      include: { user: true },
+    });
+
+    return {
+      success: true,
+      duplicate: false,
+      message: `فاکتور شماره ${factor} با موفقیت برای ${user.name} ثبت شد.`,
+      sourceFile: originalName,
+      extracted: { factor: String(factor), date, phone, name: user.name, sale, discount },
+      invoice,
+    };
   }
-  return "";
-}
-
-// شماره موبایل
-const phone = getCell(
-  "E21",
-  "D21",
-  "F21",
-  "E22",
-  "D22",
-  "F22"
-).replace(/\D/g, "");
-
-// نام مشتری
-const name = getCell(
-  "X21",
-  "W21",
-  "Y21",
-  "X22",
-  "W22",
-  "Y22"
-);
-
-// شماره فاکتور
-const factor = getCell("M6");
-
-// تاریخ
-const date = getCell("M10");
-
-// آدرس
-const address = getCell(
-  "D26",
-  "C26",
-  "E26"
-);
-
-console.log("=================================");
-console.log("NAME    :", name);
-console.log("PHONE   :", phone);
-console.log("ADDRESS :", address);
-console.log("FACTOR  :", factor);
-console.log("DATE    :", date);
-console.log("=================================");
-  // جمع کل
-  //----------------------------------------
-
-  const sale = this.findValue(
-    rows,
-    "جمع کل",
-  );
-
-  //----------------------------------------
-  // جمع تخفیفات
-  //----------------------------------------
-
-  const discount = this.findValue(
-    rows,
-    "جمع تخفيفات",
-  );
-
-  console.log("Phone :", phone);
-  console.log("Factor:", factor);
-  console.log("Date :", date);
-  console.log("Sale :", sale);
-  console.log("Discount :", discount);
-let user = await this.prisma.user.findFirst({
-  where: {
-    phone,
-  },
-});
-
-if (!user) {
-
-  user = await this.prisma.user.create({
-
-    data: {
-
-      personCode: phone,
-
-      name,
-
-      phone,
-
-      address,
-
-    },
-
-  });
-
-}
-
-//----------------------------------------
-// خروجی برای React
-//----------------------------------------
-
-return [
-  {
-    name: user?.name || "پیدا نشد",
-    phone,
-    sale,
-    profit: discount,
-    factor,
-    date,
-  },
-];
-
-}
 }
