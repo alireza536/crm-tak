@@ -19,17 +19,30 @@ import ReportsCenter from "./pages/ReportsCenter";
 import TaskPlanner from "./pages/TaskPlanner";
 import SalesPipeline from "./pages/SalesPipeline";
 import Inventory from "./pages/Inventory";
-
+import Login from "./pages/Login";
 import "./App.css";
 
 export default function App() {
+  const token = localStorage.getItem("token");
+
   return (
+    
     <BrowserRouter>
       <div className="layout">
         <Sidebar />
         <main className="mainContent">
           <Topbar />
           <Routes>
+            <Route
+ path="/login"
+ element={
+   token
+   ?
+   <Navigate to="/" />
+   :
+   <Login />
+ }
+/>
             <Route path="/" element={<Dashboard />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/customer/:id" element={<CustomerProfile />} />
