@@ -19,50 +19,107 @@ import ReportsCenter from "./pages/ReportsCenter";
 import TaskPlanner from "./pages/TaskPlanner";
 import SalesPipeline from "./pages/SalesPipeline";
 import Inventory from "./pages/Inventory";
+
 import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import "./App.css";
 
+
 export default function App() {
+
   const token = localStorage.getItem("token");
 
+
   return (
-    
+
     <BrowserRouter>
-      <div className="layout">
-        <Sidebar />
-        <main className="mainContent">
-          <Topbar />
-          <Routes>
-            <Route
- path="/login"
- element={
-   token
-   ?
-   <Navigate to="/" />
-   :
-   <Login />
- }
-/>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/customer/:id" element={<CustomerProfile />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/insights" element={<SalesIntelligence />} />
-            <Route path="/ai-assistant" element={<AISalesAssistant />} />
-            <Route path="/follow-ups" element={<FollowUpCenter />} />
-            <Route path="/campaigns" element={<CampaignCenter />} />
-            <Route path="/reports" element={<ReportsCenter />} />
-            <Route path="/tasks" element={<TaskPlanner />} />
-            <Route path="/pipeline" element={<SalesPipeline />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/upload" element={<UploadSales />} />
-            <Route path="/customer-upload" element={<CustomerUpload />} />
-            <Route path="/sms" element={<Sms />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
+
+      {
+        token ?
+
+        <div className="layout">
+
+          <Sidebar />
+
+          <main className="mainContent">
+
+            <Topbar />
+
+            <Routes>
+
+              <Route path="/" element={<Dashboard />} />
+
+              <Route path="/customers" element={<Customers />} />
+
+              <Route 
+                path="/customer/:id" 
+                element={<CustomerProfile />} 
+              />
+
+              <Route path="/invoices" element={<Invoices />} />
+
+              <Route path="/insights" element={<SalesIntelligence />} />
+
+              <Route path="/ai-assistant" element={<AISalesAssistant />} />
+
+              <Route path="/follow-ups" element={<FollowUpCenter />} />
+
+              <Route path="/campaigns" element={<CampaignCenter />} />
+
+              <Route path="/reports" element={<ReportsCenter />} />
+
+              <Route path="/tasks" element={<TaskPlanner />} />
+
+              <Route path="/pipeline" element={<SalesPipeline />} />
+
+              <Route path="/inventory" element={<Inventory />} />
+
+              <Route path="/upload" element={<UploadSales />} />
+
+              <Route path="/customer-upload" element={<CustomerUpload />} />
+
+              <Route path="/sms" element={<Sms />} />
+
+              <Route path="/settings" element={<Settings />} />
+
+              <Route 
+                path="*" 
+                element={<Navigate to="/" replace />} 
+              />
+
+            </Routes>
+
+
+          </main>
+
+        </div>
+
+
+        :
+
+
+        <Routes>
+
+          <Route 
+            path="/login" 
+            element={<Login />} 
+          />
+
+
+          <Route 
+            path="*" 
+            element={<Navigate to="/login" replace />} 
+          />
+
+
+        </Routes>
+
+      }
+
+
     </BrowserRouter>
+
   );
+
 }
