@@ -5,18 +5,25 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
+    
     "start": "ts-node src/main.ts",
     "start:dev": "ts-node --transpile-only src/main.ts"
+    
   },
   "dependencies": {
     "@nestjs/common": "^11.1.24",
     "@nestjs/core": "^11.1.24",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.25",
     "@nestjs/typeorm": "^11.0.1",
     "@prisma/client": "^5.22.0",
     "axios": "^1.18.1",
+    "bcrypt": "^6.0.0",
     "melipayamak": "^1.0.5",
     "multer": "^1.4.5-lts.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.21.0",
     "prisma": "^5.22.0",
     "reflect-metadata": "^0.2.2",
@@ -26,9 +33,11 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.9.1",
+    "@types/passport-jwt": "^4.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
