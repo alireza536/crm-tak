@@ -28,7 +28,7 @@ export default function Login(){
 
 
       const res = await axios.post(
-        "http://localhost:3001/auth/login",
+        "https://crm-tak-frontend.onrender.com/login",
         {
           username,
           password
