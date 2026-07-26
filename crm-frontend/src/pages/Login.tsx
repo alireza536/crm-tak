@@ -13,7 +13,6 @@ export default function Login(){
   const [password,setPassword] = useState("");
 
   const [error,setError] = useState("");
-
   const [loading,setLoading] = useState(false);
 
 
@@ -25,13 +24,19 @@ export default function Login(){
       setLoading(true);
       setError("");
 
+      console.log("LOGIN:",username,password);
+
+
       const res = await axios.post(
-  "https://crm-tak.onrender.com/auth/login",
-  {
-    username,
-    password,
-  }
-);
+        "http://localhost:3001/auth/login",
+        {
+          username,
+          password
+        }
+      );
+
+
+      console.log(res.data);
 
 
       localStorage.setItem(
@@ -43,8 +48,9 @@ export default function Login(){
       navigate("/");
 
 
-    }
-    catch(err){
+    }catch(err){
+
+      console.log(err);
 
       setError(
         "نام کاربری یا رمز عبور اشتباه است"
@@ -65,11 +71,14 @@ export default function Login(){
 
     <div className="loginPage" dir="rtl">
 
+
       <div className="loginCard">
+
 
         <h1>
           ورود به TAK CRM
         </h1>
+
 
 
         <input
@@ -83,6 +92,7 @@ export default function Login(){
           }
 
         />
+
 
 
         <input
@@ -100,12 +110,14 @@ export default function Login(){
         />
 
 
+
         {
           error &&
           <div className="loginError">
             {error}
           </div>
         }
+
 
 
         <button
@@ -121,10 +133,13 @@ export default function Login(){
             "ورود"
           }
 
+
         </button>
 
 
+
       </div>
+
 
     </div>
 

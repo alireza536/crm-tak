@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
 
   const passwordHash = await bcrypt.hash(
-    "m1a2h3d4i5",
+    "123456",
     10
   );
 
