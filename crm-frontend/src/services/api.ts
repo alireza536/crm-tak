@@ -10,97 +10,101 @@ const api = axios.create({
 });
 
 
-// ارسال خودکار توکن
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(
+  (config) => {
 
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if(token){
+      config.headers.Authorization =
+        `Bearer ${token}`;
+    }
+
+    return config;
+  },
+
+  (error)=>{
+    return Promise.reject(error);
   }
-
-  return config;
-
-});
+);
 
 
 export default api;
 
 
-export async function getDashboard(): Promise<any> {
-  const response = await api.get("/dashboard");
-  return response.data;
+export async function getDashboard(){
+  const res = await api.get("/dashboard");
+  return res.data;
 }
 
 
-export async function getSalesChart(): Promise<any[]> {
-  const response = await api.get("/dashboard/sales-chart");
-  return response.data;
+export async function getSalesChart(){
+  const res = await api.get("/dashboard/sales-chart");
+  return res.data;
 }
 
 
-export async function getInvoices(): Promise<any[]> {
-  const response = await api.get("/invoice");
-  return response.data;
+export async function getInvoices(){
+  const res = await api.get("/invoice");
+  return res.data;
 }
 
 
-export async function getCustomers(): Promise<any[]> {
-  const response = await api.get("/user/customers");
-  return response.data;
+export async function getCustomers(){
+  const res = await api.get("/user/customers");
+  return res.data;
+}
+export async function getCustomerProfile(id:number){
+  const res = await api.get(`/user/profile/${id}`);
+  return res.data;
 }
 
 
-export async function getCustomerProfile(id: number): Promise<any> {
-  const response = await api.get(`/user/profile/${id}`);
-  return response.data;
-}
-
-
-export async function uploadCustomers(file: File): Promise<any> {
+export async function uploadCustomers(file:File){
 
   const formData = new FormData();
 
-  formData.append("file", file);
+  formData.append("file",file);
 
-  const response = await api.post(
+  const res = await api.post(
     "/excel/upload",
     formData
   );
 
-  return response.data;
+  return res.data;
 }
 
 
 export async function uploadSalesInvoice(
-  file: File,
-  onProgress?: (percentage: number) => void,
-): Promise<any> {
+  file:File,
+  onProgress?:(p:number)=>void
+){
 
   const formData = new FormData();
 
-  formData.append("file", file);
+  formData.append("file",file);
 
 
-  const response = await api.post(
+  const res = await api.post(
     "/sales/upload",
     formData,
     {
       onUploadProgress:(event)=>{
 
-        if(!event.total || !onProgress)
-          return;
+        if(event.total && onProgress){
 
-        onProgress(
-          Math.round(
-            (event.loaded * 100) / event.total
-          )
-        );
+          onProgress(
+            Math.round(
+              event.loaded * 100 / event.total
+            )
+          );
+
+        }
 
       }
     }
   );
 
 
-  return response.data;
+  return res.data;
 }
