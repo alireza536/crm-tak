@@ -73,6 +73,13 @@ export async function uploadCustomers(file:File){
 
   return res.data;
 }
+export async function getNotifications(){
+
+ const res = await api.get("/notifications");
+
+ return res.data;
+
+}
 
 
 export async function uploadSalesInvoice(
