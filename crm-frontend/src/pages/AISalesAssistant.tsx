@@ -73,7 +73,7 @@ const toNumber = (value: unknown) => {
 };
 
 const formatNumber = (value: unknown) => toNumber(value).toLocaleString("fa-IR");
-const formatMoney = (value: unknown) => `${formatNumber(value)} تومان`;
+const formatMoney = (value: unknown) => `${formatNumber(value)} ریال`;
 
 const parseDate = (value?: string) => {
   const date = value ? new Date(value) : null;
@@ -237,7 +237,7 @@ export default function AISalesAssistant() {
       result.push({
         tone: "success",
         title: "مشتریان باارزش",
-        text: `${formatNumber(analytics.vipCustomers.length)} مشتری از مرز ۱۰۰ میلیون تومان خرید عبور کرده‌اند و مناسب باشگاه مشتریان VIP هستند.`,
+        text: `${formatNumber(analytics.vipCustomers.length)} مشتری از مرز ۱۰۰ میلیون ریال خرید عبور کرده‌اند و مناسب باشگاه مشتریان VIP هستند.`,
       });
     }
 

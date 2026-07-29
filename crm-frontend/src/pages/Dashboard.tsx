@@ -83,7 +83,7 @@ type Invoice = {
 
 const number = (value: unknown) => Number(value || 0);
 const formatNumber = (value: unknown) => number(value).toLocaleString("fa-IR");
-const formatMoney = (value: unknown) => `${formatNumber(value)} تومان`;
+const formatMoney = (value: unknown) => `${formatNumber(value)} ریال`;
 
 const toDate = (value?: string) => {
   const date = value ? new Date(value) : null;
@@ -306,7 +306,7 @@ export default function Dashboard() {
     {
       title: "مشتریان VIP",
       value: formatNumber(analytics.vipCustomers),
-      note: "خرید بالای ۱۰۰ میلیون تومان",
+      note: "خرید بالای ۱۰۰ میلیون ریال",
       icon: <FaGaugeHigh />,
       tone: "gold",
     },

@@ -53,7 +53,7 @@ type RangeKey = "7" | "30" | "90" | "365" | "all";
 
 const number = (value: unknown) => Number(value || 0);
 const formatNumber = (value: unknown) => number(value).toLocaleString("fa-IR");
-const formatMoney = (value: unknown) => `${formatNumber(value)} تومان`;
+const formatMoney = (value: unknown) => `${formatNumber(value)} ریال`;
 
 const validDate = (value?: string) => {
   if (!value) return null;

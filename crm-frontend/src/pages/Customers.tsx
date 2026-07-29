@@ -188,7 +188,7 @@ export default function Customers() {
           <div>
             <small>ارزش خرید مشتریان</small>
             <strong>{loading ? "—" : formatNumber(stats.totalSales)}</strong>
-            <span>تومان فروش ثبت‌شده</span>
+            <span>ریال فروش ثبت‌شده</span>
           </div>
         </article>
       </div>

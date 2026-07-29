@@ -81,7 +81,7 @@ export default function CustomerCard({
         <div>
           <span>مجموع خرید</span>
           <strong>{formatNumber(totalSale)}</strong>
-          <small>تومان</small>
+          <small>ریال</small>
         </div>
 
         <div>
@@ -99,7 +99,7 @@ export default function CustomerCard({
                 : 0,
             )}
           </strong>
-          <small>تومان</small>
+          <small>ریال</small>
         </div>
       </div>
 

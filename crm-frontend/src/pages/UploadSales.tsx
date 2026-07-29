@@ -737,7 +737,7 @@ export default function UploadSales() {
 
               <b>
                 {money(result.extracted.sale)}
-                {" "}تومان
+                {" "}ریال
               </b>
 
             </p>
@@ -752,7 +752,7 @@ export default function UploadSales() {
 
               <b>
                 {money(result.extracted.discount)}
-                {" "}تومان
+                {" "}ریال
               </b>
 
             </p>

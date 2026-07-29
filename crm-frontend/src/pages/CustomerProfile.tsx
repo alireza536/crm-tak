@@ -341,7 +341,7 @@ export default function CustomerProfile() {
           <div>
             <small>مجموع خرید</small>
             <strong>{money(analytics.totalSale)}</strong>
-            <span>تومان</span>
+            <span>ریال</span>
           </div>
           <em><FaChartLine /> ارزش کل مشتری</em>
         </article>
@@ -361,7 +361,7 @@ export default function CustomerProfile() {
           <div>
             <small>میانگین هر خرید</small>
             <strong>{money(analytics.averagePurchase)}</strong>
-            <span>تومان</span>
+            <span>ریال</span>
           </div>
           <em><FaShop /> میانگین سبد خرید</em>
         </article>
@@ -389,7 +389,7 @@ export default function CustomerProfile() {
               <div className="chartTotal">
                 <small>فروش ثبت‌شده</small>
                 <strong>{money(analytics.totalSale)}</strong>
-                <span>تومان</span>
+                <span>ریال</span>
               </div>
             </div>
 
@@ -455,7 +455,7 @@ export default function CustomerProfile() {
                         <tr key={item.id || `${item.factor}-${index}`}>
                           <td><strong>#{item.factor || item.id || index + 1}</strong></td>
                           <td>{persianDate(item.createdAt || item.date)}</td>
-                          <td>{money(sale)} <small>تومان</small></td>
+                          <td>{money(sale)} <small>ریال</small></td>
                           <td className="discountCell">{money(discount)}</td>
                           <td><strong>{money(Math.max(0, sale - discount))}</strong></td>
                           <td><span className="invoiceStatus"><FaCircleCheck /> ثبت‌شده</span></td>
@@ -524,7 +524,7 @@ export default function CustomerProfile() {
                   <span><FaFileInvoice /></span>
                   <div>
                     <strong>فاکتور #{invoice.factor || invoice.id || index + 1} ثبت شد</strong>
-                    <p>به مبلغ {money(getInvoiceAmount(invoice))} تومان</p>
+                    <p>به مبلغ {money(getInvoiceAmount(invoice))} ریال</p>
                     <small>{relativeDate(invoice.createdAt || invoice.date)}</small>
                   </div>
                 </div>
@@ -549,7 +549,7 @@ export default function CustomerProfile() {
               </div>
             </div>
             <dl>
-              <div><dt>جمع تخفیف‌ها</dt><dd>{money(analytics.totalDiscount)} تومان</dd></div>
+              <div><dt>جمع تخفیف‌ها</dt><dd>{money(analytics.totalDiscount)} ریال</dd></div>
               <div><dt>کد مشتری</dt><dd>{customer.personCode || "ثبت نشده"}</dd></div>
               <div><dt>سطح مشتری</dt><dd>{analytics.level.title}</dd></div>
               <div><dt>آخرین بروزرسانی</dt><dd>همین حالا</dd></div>

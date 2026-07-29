@@ -161,7 +161,7 @@ export default function FollowUpCenter() {
           title: `${name} نیاز به پیگیری دارد`,
           description: `از آخرین فعالیت این مشتری ${daysSince.toLocaleString("fa-IR")} روز گذشته است.`,
           meta: totalPurchase
-            ? `ارزش خرید: ${money(totalPurchase)} تومان`
+            ? `ارزش خرید: ${money(totalPurchase)} ریال`
             : "سابقه خرید موجود است",
           priority: daysSince >= 90 ? "high" : "medium",
           link: `/customer/${id}`,
@@ -194,7 +194,7 @@ export default function FollowUpCenter() {
           description: unpaid
             ? "وضعیت پرداخت این فاکتور هنوز نهایی نشده است."
             : "این فاکتور قدیمی است و وضعیت نهایی مشخصی ندارد.",
-          meta: amount ? `${money(amount)} تومان` : `شماره فاکتور: ${id}`,
+          meta: amount ? `${money(amount)} ریال` : `شماره فاکتور: ${id}`,
           priority: daysOld >= 14 ? "high" : "medium",
           link: "/invoices",
           action: "بررسی فاکتور",
