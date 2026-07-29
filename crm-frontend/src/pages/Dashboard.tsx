@@ -84,6 +84,43 @@ type Invoice = {
 const number = (value: unknown) => Number(value || 0);
 const formatNumber = (value: unknown) => number(value).toLocaleString("fa-IR");
 const formatMoney = (value: unknown) => `${formatNumber(value)} ریال`;
+const formatChartDate = (value: unknown, index: number) => {
+  if (!value) {
+    return `دوره ${index + 1}`;
+  }
+
+  const text = String(value);
+
+  const persianMonths = [
+    "فروردین",
+    "اردیبهشت",
+    "خرداد",
+    "تیر",
+    "مرداد",
+    "شهریور",
+    "مهر",
+    "آبان",
+    "آذر",
+    "دی",
+    "بهمن",
+    "اسفند",
+  ];
+
+  if (persianMonths.some((month) => text.includes(month))) {
+    return text;
+  }
+
+  const date = new Date(text);
+
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleDateString("fa-IR", {
+      year: "numeric",
+      month: "short",
+    });
+  }
+
+  return text;
+};
 
 const toDate = (value?: string) => {
   const date = value ? new Date(value) : null;
@@ -215,14 +252,14 @@ export default function Dashboard() {
   }, [customers, invoices, summary]);
 
   const salesChart = useMemo(
-    () =>
-      chart.map((item, index) => ({
-        name: item.month || `دوره ${index + 1}`,
-        sale: number(item.sale),
-        profit: number(item.profit),
-      })),
-    [chart],
-  );
+  () =>
+    chart.map((item, index) => ({
+      name: formatChartDate(item.month, index),
+      sale: number(item.sale),
+      profit: number(item.profit),
+    })),
+  [chart],
+);
 
   const topCustomers = useMemo(
     () =>
