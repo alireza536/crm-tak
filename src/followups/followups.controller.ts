@@ -1,0 +1,4 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';import { RoleGuard } from '../auth/role.guard';import { Roles } from '../auth/roles.decorator';import { FollowupsService } from './followups.service';
+@Controller('followups') @UseGuards(JwtAuthGuard,RoleGuard) @Roles('ADMIN','SALES')
+export class FollowupsController {constructor(private readonly service:FollowupsService){}@Post()create(@Body()body:any,@Req()req:any){return this.service.create(body,req.user)}@Get()all(@Req()req:any){return this.service.all(req.user)}@Get('customer/:id')customer(@Param('id')id:string,@Req()req:any){return this.service.byCustomer(Number(id),req.user)}@Patch(':id')update(@Param('id')id:string,@Body()body:any,@Req()req:any){return this.service.update(Number(id),body,req.user)}@Delete(':id')remove(@Param('id')id:string,@Req()req:any){return this.service.remove(Number(id),req.user)}}

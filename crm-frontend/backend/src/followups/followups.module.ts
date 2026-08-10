@@ -1,0 +1,2 @@
+import { Module } from '@nestjs/common';import { TypeOrmModule } from '@nestjs/typeorm';import { FollowUp } from '../entities/follow-up.entity';import { FollowupsController } from './followups.controller';import { FollowupsService } from './followups.service';
+@Module({imports:[TypeOrmModule.forFeature([FollowUp])],controllers:[FollowupsController],providers:[FollowupsService],exports:[FollowupsService]})export class FollowupsModule{}

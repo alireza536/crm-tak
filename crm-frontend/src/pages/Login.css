@@ -31,6 +31,10 @@
 
 }
 
+.loginBrand { text-align:center; color:#0f6a47; font-size:13px; font-weight:900; letter-spacing:2px; }
+.loginCard p { margin-top:-20px; color:#74817b; text-align:center; font-size:13px; line-height:1.8; }
+.loginCard label { display:flex; flex-direction:column; gap:7px; color:#415048; font-size:12px; font-weight:700; }
+
 
 
 .loginCard input {

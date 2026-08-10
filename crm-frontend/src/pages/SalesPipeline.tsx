@@ -1,226 +1,24 @@
-import {
-  FaUsers,
-  FaPhone,
-  FaHandshake,
-  FaCircleCheck,
-  FaPlus,
-  FaMoneyBillTrendUp,
-} from "react-icons/fa6";
-
+import { useEffect,useMemo,useState,type DragEvent,type FormEvent } from "react";
+import { ArrowRight,BarChart3,CalendarDays,CheckCircle2,CircleDollarSign,Clock3,Crown,FileText,GripVertical,MessageSquare,NotebookPen,Phone,Plus,RefreshCw,ShoppingBag,Target,TrendingUp,UserRound,UsersRound,XCircle } from "lucide-react";
+import { Link,useNavigate,useParams } from "react-router-dom";
+import { Area,AreaChart,Bar,BarChart,CartesianGrid,Cell,Pie,PieChart,ResponsiveContainer,Tooltip,XAxis,YAxis } from "recharts";
+import { ActionButton,Badge,ChartCard,EmptyState,GlassCard,Modal,PageHeader,StatCard,Timeline } from "../components/ui/DesignSystem";
+import { createSale,getCustomers,getRoleDashboard,getSales } from "../services/api";
+import { getCurrentUser } from "../utils/auth";
 import "./SalesPipeline.css";
 
-
-const stages = [
-  {
-    title: "سرنخ‌های جدید",
-    count: "320",
-    amount: "450M",
-    icon: <FaUsers />,
-  },
-  {
-    title: "تماس گرفته شده",
-    count: "180",
-    amount: "280M",
-    icon: <FaPhone />,
-  },
-  {
-    title: "مذاکره",
-    count: "95",
-    amount: "190M",
-    icon: <FaHandshake />,
-  },
-  {
-    title: "موفق",
-    count: "42",
-    amount: "120M",
-    icon:<FaCircleCheck />
-  },
-];
-
-
-export default function SalesPipeline() {
-
-return (
-
-<div className="pipelinePage">
-
-
-<section className="pipelineHero">
-
-<div>
-<h1>قیف فروش</h1>
-
-<p>
-مدیریت فرصت‌های فروش، مراحل معامله و پیگیری مشتریان
-</p>
-
-</div>
-
-
-<button>
-<FaPlus/>
- فرصت جدید
-</button>
-
-
-</section>
-
-
-
-
-
-<section className="pipelineStats">
-
-
-<div className="pipelineStat">
-
-<FaMoneyBillTrendUp/>
-
-<div>
-<span>ارزش کل فرصت‌ها</span>
-<b>1.2B</b>
-</div>
-
-</div>
-
-
-<div className="pipelineStat">
-
-<FaUsers/>
-
-<div>
-<span>مشتریان فعال</span>
-<b>320</b>
-</div>
-
-</div>
-
-
-<div className="pipelineStat">
-
-<FaHandshake/>
-
-<div>
-<span>معاملات باز</span>
-<b>95</b>
-</div>
-
-</div>
-
-
-<div className="pipelineStat">
-
-<FaCircleCheck />
-
-<div>
-<span>فروش موفق</span>
-<b>42</b>
-</div>
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-<section className="pipelineBoard">
-
-
-<h2>
-مراحل فروش
-</h2>
-
-
-
-<div className="pipelineColumns">
-
-
-{
-stages.map((stage,index)=>(
-
-
-<div className="pipelineColumn" key={index}>
-
-
-<div className="columnTitle">
-
-{stage.icon}
-
-<h3>
-{stage.title}
-</h3>
-
-</div>
-
-
-
-<div className="dealCard">
-
-<strong>
-فروشگاه TAK
-</strong>
-
-
-<p>
-مبلغ معامله:
-{stage.amount}
-</p>
-
-
-<span>
-{stage.count} مشتری
-</span>
-
-
-</div>
-
-
-
-
-<div className="dealCard">
-
-<strong>
-مشتری جدید
-</strong>
-
-
-<p>
-پیگیری در انتظار
-</p>
-
-
-<span>
-امروز
-</span>
-
-
-</div>
-
-
-
-</div>
-
-
-
-))
-}
-
-
-
-</div>
-
-
-</section>
-
-
-
-</div>
-
-
-);
-
-}
+type Stage="NEW"|"CONTACTED"|"DISCOVERY"|"PROPOSAL"|"NEGOTIATION"|"APPROVED"|"COMPLETED"|"CANCELLED";type Priority="HIGH"|"MEDIUM"|"LOW";
+type Customer={id:number;name:string;storeName?:string;phone?:string;assignedToId?:number|null;assignedTo?:{id:number;name:string}|null};type Sale={id:number;customerId?:number;userId?:number;productName:string;quantity:number;amount:number|string;createdAt:string;customer?:{id?:number;name?:string};user?:{id?:number;name?:string}};
+export type Opportunity={id:string;customerId:number;customerName:string;companyName?:string;salespersonId:number;salespersonName:string;product:string;quantity:number;amount:number;discount:number;stage:Stage;priority:Priority;probability:number;description:string;lastActivity:string;nextFollowUp:string;expectedClose:string;createdAt:string;notes:Array<{id:string;text:string;createdAt:string;user:string}>};
+const stages:Array<{key:Stage;title:string;color:string}>=[{key:"NEW",title:"مشتری جدید",color:"#60a5fa"},{key:"CONTACTED",title:"تماس گرفته شد",color:"#22d3ee"},{key:"DISCOVERY",title:"نیازسنجی",color:"#a78bfa"},{key:"PROPOSAL",title:"ارسال پیشنهاد",color:"#8b5cf6"},{key:"NEGOTIATION",title:"مذاکره",color:"#f59e0b"},{key:"APPROVED",title:"تایید خرید",color:"#34d399"},{key:"COMPLETED",title:"تکمیل شده",color:"#10b981"},{key:"CANCELLED",title:"لغو شده",color:"#fb7185"}];
+const probabilities:Record<Stage,number>={NEW:10,CONTACTED:20,DISCOVERY:35,PROPOSAL:50,NEGOTIATION:70,APPROVED:90,COMPLETED:100,CANCELLED:0};const key="tak-crm-sales-opportunities-v2",fa=(v:unknown)=>Number(v||0).toLocaleString("fa-IR"),money=(v:unknown)=>`${fa(v)} ریال`,date=(v?:string)=>v&&!Number.isNaN(+new Date(v))?new Date(v).toLocaleDateString("fa-IR",{month:"short",day:"numeric"}):"—";
+const read=():Opportunity[]=>{try{return JSON.parse(localStorage.getItem(key)||"[]")}catch{return[]}};const save=(items:Opportunity[])=>localStorage.setItem(key,JSON.stringify(items));
+
+function usePipelineData(){const user=getCurrentUser();const[customers,setCustomers]=useState<Customer[]>([]),[sales,setSales]=useState<Sale[]>([]),[opportunities,setOpportunities]=useState<Opportunity[]>(read),[dashboard,setDashboard]=useState<any>(null),[loading,setLoading]=useState(true);const load=async()=>{try{setLoading(true);const[c,s,d]=await Promise.all([getCustomers(),getSales(),getRoleDashboard()]);const customerData=Array.isArray(c)?c:[],saleData=Array.isArray(s)?s:[];setCustomers(customerData);setSales(saleData);setDashboard(d);setOpportunities(current=>{if(current.length)return current;const derived:Opportunity[]=customerData.map((customer:Customer,index:number)=>{const customerSales=saleData.filter((sale:Sale)=>Number(sale.customerId??sale.customer?.id)===customer.id),last=customerSales.sort((a:Sale,b:Sale)=>+new Date(b.createdAt)-+new Date(a.createdAt))[0],owner=customer.assignedTo;return{id:`derived-${customer.id}`,customerId:customer.id,customerName:customer.name,companyName:customer.storeName,salespersonId:Number(owner?.id??customer.assignedToId??user?.id??0),salespersonName:owner?.name||user?.name||"تخصیص داده نشده",product:last?.productName||"تعیین نشده",quantity:last?.quantity||1,amount:Number(last?.amount||0),discount:0,stage:last?"COMPLETED":"NEW",priority:index<2?"HIGH":"MEDIUM",probability:last?100:10,description:last?"فرصت ایجادشده از فروش ثبت‌شده":"فرصت ایجادشده از مشتری موجود",lastActivity:last?.createdAt||new Date().toISOString(),nextFollowUp:new Date(Date.now()+864e5*(index+1)).toISOString(),expectedClose:new Date(Date.now()+864e5*14).toISOString(),createdAt:new Date().toISOString(),notes:[]}});save(derived);return derived});}finally{setLoading(false)}};useEffect(()=>{void load()},[]);const update=(next:Opportunity[])=>{setOpportunities(next);save(next)};const visible=user?.role==="ADMIN"?opportunities:opportunities.filter(x=>x.salespersonId===user?.id);return{user,customers,sales,dashboard,opportunities,visible,loading,load,update}}
+
+export default function SalesPipeline(){const data=usePipelineData();const[createOpen,setCreateOpen]=useState(false),[dragging,setDragging]=useState<string|null>(null);const move=(id:string,stage:Stage)=>data.update(data.opportunities.map(x=>x.id===id?{...x,stage,probability:probabilities[stage],lastActivity:new Date().toISOString()}:x));const drop=(e:DragEvent,stage:Stage)=>{e.preventDefault();if(dragging)move(dragging,stage);setDragging(null)};
+ const stats=useMemo(()=>{const won=data.visible.filter(x=>x.stage==="COMPLETED"),open=data.visible.filter(x=>!["COMPLETED","CANCELLED"].includes(x.stage)),revenue=won.reduce((s,x)=>s+x.amount,0),today=data.sales.filter(x=>new Date(x.createdAt).toDateString()===new Date().toDateString()).reduce((s,x)=>s+Number(x.amount),0),month=data.sales.filter(x=>{const d=new Date(x.createdAt),now=new Date();return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).reduce((s,x)=>s+Number(x.amount),0);return{won,open,revenue,today,month,conversion:data.visible.length?won.length/data.visible.length*100:0,waiting:open.filter(x=>+new Date(x.nextFollowUp)<Date.now()+2*864e5).length}},[data.visible,data.sales]);
+ const funnel=stages.slice(0,7).map(s=>({name:s.title,value:data.visible.filter(x=>x.stage===s.key).length,color:s.color}));const monthly=useMemo(()=>{const now=new Date();return Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-(5-i),1),items=data.sales.filter(x=>{const a=new Date(x.createdAt);return a.getFullYear()===d.getFullYear()&&a.getMonth()===d.getMonth()});return{name:d.toLocaleDateString("fa-IR",{month:"short"}),amount:items.reduce((s,x)=>s+Number(x.amount),0)}})},[data.sales]);const performance=(data.dashboard?.salesPerformance||[]).map((x:any)=>({...x,revenue:Number(x.revenue||0)}));const submit=(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();const form=new FormData(e.currentTarget),customer=data.customers.find(x=>x.id===Number(form.get("customerId"))),stage=String(form.get("stage")) as Stage;if(!customer)return;const opp:Opportunity={id:String(Date.now()),customerId:customer.id,customerName:customer.name,companyName:customer.storeName,salespersonId:Number(customer.assignedTo?.id??customer.assignedToId??data.user?.id??0),salespersonName:customer.assignedTo?.name||data.user?.name||"کارشناس",product:String(form.get("product")),quantity:1,amount:Number(form.get("amount")||0),discount:0,stage,priority:String(form.get("priority")) as Priority,probability:probabilities[stage],description:String(form.get("description")||""),lastActivity:new Date().toISOString(),nextFollowUp:String(form.get("nextFollowUp")||new Date().toISOString()),expectedClose:String(form.get("expectedClose")||new Date().toISOString()),createdAt:new Date().toISOString(),notes:[]};data.update([opp,...data.opportunities]);setCreateOpen(false)};
+ return <main className="pipelinePage executivePipeline" dir="rtl"><PageHeader eyebrow="REVENUE WORKSPACE" title="مسیر فروش TAK CRM" description={data.user?.role==="ADMIN"?"نمای کامل فرصت‌ها و عملکرد تیم فروش":"فرصت‌ها، مشتریان و پیگیری‌های شخصی شما"} actions={<ActionButton className="secondary" onClick={()=>void data.load()}><RefreshCw size={15}/> بروزرسانی</ActionButton>}/><section className="pipelineStatsNew">{data.user?.role==="ADMIN"?<><StatCard tone="purple" title="کل فرصت‌ها" value={fa(data.visible.length)} hint="همه مراحل فروش" icon={<Target/>}/><StatCard tone="green" title="درآمد قطعی" value={money(stats.revenue)} hint="فرصت‌های تکمیل‌شده" icon={<CircleDollarSign/>}/><StatCard tone="cyan" title="معاملات باز" value={fa(stats.open.length)} hint="در جریان مذاکره" icon={<TrendingUp/>}/><StatCard tone="orange" title="نرخ تبدیل" value={`${stats.conversion.toLocaleString("fa-IR",{maximumFractionDigits:1})}٪`} hint="موفق از کل فرصت‌ها" icon={<BarChart3/>}/><StatCard tone="blue" title="بهترین کارشناس" value={performance[0]?.name||"—"} hint={performance[0]?money(performance[0].revenue):"داده کافی نیست"} icon={<Crown/>}/></>:<><StatCard tone="green" title="فروش امروز" value={money(stats.today)} hint="فروش شخصی امروز" icon={<ShoppingBag/>}/><StatCard tone="cyan" title="فروش این ماه" value={money(stats.month)} hint="عملکرد ماه جاری" icon={<CircleDollarSign/>}/><StatCard tone="purple" title="تعداد فرصت‌ها" value={fa(data.visible.length)} hint="فرصت‌های شخصی" icon={<Target/>}/><StatCard tone="blue" title="فرصت موفق" value={fa(stats.won.length)} hint={`نرخ تبدیل ${stats.conversion.toFixed(0)}٪`} icon={<CheckCircle2/>}/><StatCard tone="orange" title="منتظر پاسخ" value={fa(stats.waiting)} hint="پیگیری نزدیک" icon={<Clock3/>}/></>}</section><section className="pipelineAnalytics"><ChartCard title="قیف فروش" subtitle="توزیع مراحل"><div className="pipelineChart"><ResponsiveContainer width="100%" height="100%"><BarChart data={funnel} layout="vertical"><XAxis type="number" hide/><YAxis type="category" dataKey="name" width={95} axisLine={false} tickLine={false}/><Tooltip cursor={{fill:"rgba(139,92,246,.05)"}}/><Bar dataKey="value" radius={[7,7,7,7]} barSize={12}>{funnel.map(x=><Cell key={x.name} fill={x.color}/>)}</Bar></BarChart></ResponsiveContainer></div></ChartCard><ChartCard title="فروش ماهانه" subtitle="شش ماه اخیر"><div className="pipelineChart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={monthly}><defs><linearGradient id="pipelineArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#22d3ee" stopOpacity=".45"/><stop offset="1" stopColor="#22d3ee" stopOpacity="0"/></linearGradient></defs><CartesianGrid strokeDasharray="3 8" vertical={false}/><XAxis dataKey="name" axisLine={false} tickLine={false}/><YAxis hide/><Tooltip formatter={v=>[money(v),"فروش"]}/><Area type="monotone" dataKey="amount" stroke="#22d3ee" strokeWidth={3} fill="url(#pipelineArea)"/></AreaChart></ResponsiveContainer></div></ChartCard>{data.user?.role==="ADMIN"&&<ChartCard title="عملکرد کارشناسان" subtitle="مقایسه درآمد"><div className="pipelineChart"><ResponsiveContainer width="100%" height="100%"><BarChart data={performance}><XAxis dataKey="name" axisLine={false} tickLine={false}/><YAxis hide/><Tooltip formatter={v=>[money(v),"درآمد"]}/><Bar dataKey="revenue" fill="#8b5cf6" radius={[7,7,0,0]}/></BarChart></ResponsiveContainer></div></ChartCard>}<ChartCard title="نرخ تبدیل" subtitle="موفق در برابر سایر فرصت‌ها"><div className="pipelineDonut"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={[{name:"موفق",value:stats.won.length},{name:"سایر",value:Math.max(data.visible.length-stats.won.length,0)}]} dataKey="value" innerRadius={52} outerRadius={76} paddingAngle={5}><Cell fill="#34d399"/><Cell fill="#252e48"/></Pie><Tooltip/></PieChart></ResponsiveContainer><strong>{stats.conversion.toFixed(0)}٪</strong></div></ChartCard></section><GlassCard className="pipelineBoardNew"><header><div><span>DRAG & DROP</span><h2>برد فرصت‌های فروش</h2></div><small>{fa(data.visible.length)} فرصت</small></header><div className="pipelineScroller">{stages.map(stage=>{const items=data.visible.filter(x=>x.stage===stage.key);return <section className="pipelineColumnNew" key={stage.key} onDragOver={e=>e.preventDefault()} onDrop={e=>drop(e,stage.key)}><header><i style={{background:stage.color}}/><strong>{stage.title}</strong><span>{fa(items.length)}</span></header><div>{items.map((x,i)=><Link draggable onDragStart={()=>setDragging(x.id)} onDragEnd={()=>setDragging(null)} to={`/pipeline/${x.id}`} className={`opportunityCard ${dragging===x.id?"dragging":""}`} key={x.id} style={{animationDelay:`${i*.04}s`}}><div className="oppTop"><GripVertical/><Badge tone={x.priority==="HIGH"?"danger":x.priority==="MEDIUM"?"warning":"info"}>{x.priority==="HIGH"?"فوری":x.priority==="MEDIUM"?"متوسط":"عادی"}</Badge></div><h3>{x.customerName}</h3><p>{x.companyName||x.product}</p><dl><div><dt>مبلغ</dt><dd>{money(x.amount)}</dd></div><div><dt>احتمال</dt><dd>{fa(x.probability)}٪</dd></div></dl><div className="oppProgress"><i style={{width:`${x.probability}%`,background:stage.color}}/></div><footer><span><UserRound/>{x.salespersonName}</span><span><CalendarDays/>{date(x.nextFollowUp)}</span></footer></Link>)}</div>{!items.length&&<span className="columnEmpty">فرصتی در این مرحله نیست</span>}</section>})}</div></GlassCard><button className="pipelineFab" onClick={()=>setCreateOpen(true)}><Plus/> فرصت فروش جدید</button><Modal open={createOpen} title="فرصت فروش جدید" onClose={()=>setCreateOpen(false)}><form className="pipelineForm" onSubmit={submit}><label>مشتری<select name="customerId" required>{data.customers.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label><label>محصول<input name="product" required/></label><label>مبلغ<input name="amount" type="number" min="0" required/></label><label>مرحله<select name="stage">{stages.map(x=><option key={x.key} value={x.key}>{x.title}</option>)}</select></label><label>اولویت<select name="priority"><option value="HIGH">فوری</option><option value="MEDIUM">متوسط</option><option value="LOW">عادی</option></select></label><label>پیگیری بعدی<input name="nextFollowUp" type="datetime-local" required/></label><label>تاریخ بستن<input name="expectedClose" type="date" required/></label><label className="full">توضیحات<textarea name="description"/></label><ActionButton type="submit">ایجاد فرصت</ActionButton></form></Modal></main>}
+
+export function OpportunityDetails(){const{id}=useParams(),navigate=useNavigate(),data=usePipelineData();const opportunity=data.opportunities.find(x=>x.id===id),[noteOpen,setNoteOpen]=useState(false),[saving,setSaving]=useState(false);if(data.loading)return <div className="pipelineDetailLoader">در حال دریافت فرصت…</div>;if(!opportunity||data.user?.role!=="ADMIN"&&opportunity.salespersonId!==data.user?.id)return <GlassCard><EmptyState title="فرصت فروش پیدا نشد" description="این فرصت وجود ندارد یا به شما تخصیص داده نشده است."/></GlassCard>;const update=(patch:Partial<Opportunity>)=>data.update(data.opportunities.map(x=>x.id===opportunity.id?{...x,...patch,lastActivity:new Date().toISOString()}:x));const addNote=(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();const text=String(new FormData(e.currentTarget).get("text")||"").trim();if(!text)return;update({notes:[{id:String(Date.now()),text,createdAt:new Date().toISOString(),user:data.user?.name||"کاربر"},...opportunity.notes]});setNoteOpen(false)};const closeSale=async()=>{try{setSaving(true);await createSale({customerId:opportunity.customerId,productName:opportunity.product,quantity:opportunity.quantity,amount:opportunity.amount});update({stage:"COMPLETED",probability:100})}finally{setSaving(false)}};const activity=[...opportunity.notes.map(x=>({id:x.id,icon:<NotebookPen/>,title:x.text,description:x.user,meta:date(x.createdAt),tone:"purple" as const})),{id:"created",icon:<Target/>,title:"فرصت فروش ایجاد شد",description:opportunity.salespersonName,meta:date(opportunity.createdAt),tone:"cyan" as const}];return <main className="opportunityDetail" dir="rtl"><button className="detailBack" onClick={()=>navigate(-1)}><ArrowRight/> بازگشت به Pipeline</button><PageHeader eyebrow="OPPORTUNITY" title={opportunity.customerName} description={`${opportunity.companyName||"فرصت فروش"} · ${opportunity.salespersonName}`} actions={<><ActionButton className="secondary" onClick={()=>setNoteOpen(true)}><NotebookPen/> یادداشت</ActionButton><ActionButton onClick={closeSale} disabled={saving}><CheckCircle2/>{saving?"در حال ثبت":"بستن فروش"}</ActionButton></>}/><section className="opportunityInfo"><GlassCard><header><UsersRound/><h2>اطلاعات مشتری</h2></header><dl><div><dt>نام مشتری</dt><dd>{opportunity.customerName}</dd></div><div><dt>شرکت</dt><dd>{opportunity.companyName||"—"}</dd></div><div><dt>کارشناس</dt><dd>{opportunity.salespersonName}</dd></div><div><dt>پیگیری بعدی</dt><dd>{date(opportunity.nextFollowUp)}</dd></div></dl></GlassCard><GlassCard><header><ShoppingBag/><h2>اطلاعات معامله</h2></header><dl><div><dt>محصول</dt><dd>{opportunity.product}</dd></div><div><dt>تعداد</dt><dd>{fa(opportunity.quantity)}</dd></div><div><dt>مبلغ</dt><dd>{money(opportunity.amount)}</dd></div><div><dt>تخفیف</dt><dd>{money(opportunity.discount)}</dd></div><div><dt>تاریخ بستن</dt><dd>{date(opportunity.expectedClose)}</dd></div></dl></GlassCard><GlassCard className="stageControl"><header><Target/><h2>مرحله فروش</h2></header><select value={opportunity.stage} onChange={e=>update({stage:e.target.value as Stage,probability:probabilities[e.target.value as Stage]})}>{stages.map(x=><option key={x.key} value={x.key}>{x.title}</option>)}</select><Link className="uiAction secondary" to="/invoices"><FileText/> ایجاد فاکتور</Link></GlassCard></section><GlassCard className="opportunityTimeline"><header><span>ACTIVITY</span><h2>تاریخچه فعالیت</h2></header><Timeline items={activity}/></GlassCard><Modal open={noteOpen} title="افزودن یادداشت" onClose={()=>setNoteOpen(false)}><form className="pipelineForm" onSubmit={addNote}><label className="full">متن یادداشت<textarea name="text" required/></label><ActionButton type="submit">ذخیره یادداشت</ActionButton></form></Modal></main>}

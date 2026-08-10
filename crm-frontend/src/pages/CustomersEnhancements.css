@@ -1,0 +1,5 @@
+.customerSegmentFilters{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.customerSegmentFilters button{padding:8px 12px;border:1px solid var(--ui-line);border-radius:10px;background:rgba(255,255,255,.025);color:#8793aa;font:inherit;font-size:9px;cursor:pointer;transition:.2s}
+.customerSegmentFilters button:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.3);color:#c4b5fd}
+.customerSegmentFilters button.active{border-color:rgba(139,92,246,.48);background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(59,130,246,.12));color:#f4f1ff;box-shadow:0 0 18px rgba(139,92,246,.12)}
+@media(max-width:600px){.customerSegmentFilters{display:grid;grid-template-columns:1fr 1fr}.customerSegmentFilters button{width:100%}}

@@ -1,148 +1,50 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-
+import { type FormEvent, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { login, userFromLogin } from "../services/api";
+import { getSession, saveSession } from "../utils/auth";
 import "./Login.css";
 
-
-export default function Login(){
-
+export default function Login() {
   const navigate = useNavigate();
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [username,setUsername] = useState("");
-  const [password,setPassword] = useState("");
+  if (getSession()) return <Navigate to="/" replace />;
 
-  const [error,setError] = useState("");
-  const [loading,setLoading] = useState(false);
-
-
-
-  const login = async()=>{
-
-    try{
-
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    try {
       setLoading(true);
       setError("");
-
-      console.log("LOGIN:",username,password);
-
-
-      const res = await axios.post(
-        "https://crm-tak-frontend.onrender.com/login",
-        {
-          username,
-          password
-        }
-      );
-
-
-      console.log(res.data);
-
-
-      localStorage.setItem(
-        "token",
-        res.data.access_token
-      );
-
-
-      navigate("/");
-
-
-    }catch(err){
-
-      console.log(err);
-
-      setError(
-        "نام کاربری یا رمز عبور اشتباه است"
-      );
-
-    }
-    finally{
-
+      const data = await login(phone.trim(), password);
+      saveSession(data.access_token, userFromLogin(data));
+      navigate("/", { replace: true });
+    } catch {
+      setError("شماره تلفن یا رمز عبور اشتباه است.");
+    } finally {
       setLoading(false);
-
     }
-
-  };
-
-
+  }
 
   return (
-
     <div className="loginPage" dir="rtl">
-
-
-      <div className="loginCard">
-
-
-        <h1>
-          ورود به TAK CRM
-        </h1>
-
-
-
-        <input
-
-          placeholder="نام کاربری"
-
-          value={username}
-
-          onChange={
-            e=>setUsername(e.target.value)
-          }
-
-        />
-
-
-
-        <input
-
-          type="password"
-
-          placeholder="رمز عبور"
-
-          value={password}
-
-          onChange={
-            e=>setPassword(e.target.value)
-          }
-
-        />
-
-
-
-        {
-          error &&
-          <div className="loginError">
-            {error}
-          </div>
-        }
-
-
-
-        <button
-          onClick={login}
-          disabled={loading}
-        >
-
-          {
-            loading
-            ?
-            "در حال ورود..."
-            :
-            "ورود"
-          }
-
-
-        </button>
-
-
-
-      </div>
-
-
+      <form className="loginCard" onSubmit={submit}>
+        <div className="loginBrand">TAK CRM</div>
+        <h1>ورود به سامانه CRM</h1>
+        <p>برای ادامه، شماره تلفن و رمز عبور خود را وارد کنید.</p>
+        <label>
+          <span>شماره تلفن</span>
+          <input inputMode="tel" autoComplete="username" placeholder="09123456789" value={phone} onChange={(event) => setPhone(event.target.value)} required />
+        </label>
+        <label>
+          <span>رمز عبور</span>
+          <input type="password" autoComplete="current-password" placeholder="رمز عبور" value={password} onChange={(event) => setPassword(event.target.value)} required />
+        </label>
+        {error && <div className="loginError">{error}</div>}
+        <button type="submit" disabled={loading}>{loading ? "در حال ورود..." : "ورود"}</button>
+      </form>
     </div>
-
   );
-
 }

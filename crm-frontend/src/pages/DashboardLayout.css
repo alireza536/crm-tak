@@ -1,0 +1,12 @@
+/* Dashboard-only geometry. Card visuals remain owned by the shared Design System. */
+.dashboardKpiGrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;align-items:stretch}
+.dashboardKpiGrid>.uiStat{grid-column:span 3}
+.dashboardKpiGrid>.uiStat:nth-child(n+5){grid-column:span 4}
+.dashboardKpiGrid>.uiStat{width:100%;min-height:136px;height:100%}
+.dashboardChartsGrid{display:grid;grid-template-columns:1.25fr 1fr .8fr;grid-template-areas:"trend monthly finance";gap:14px;align-items:stretch}
+.dashboardChartsGrid>article{min-width:0}
+.dashboardTrendChart{grid-area:trend}.dashboardMonthlyChart{grid-area:monthly}.dashboardFinanceChart{grid-area:finance}
+.dashboardChartsGrid .chartBox{box-sizing:border-box;width:100%;height:300px;overflow:hidden;padding:4px 2px 0}.dashboardFinanceChart .financialDonut{display:flex;height:300px;min-height:300px;align-items:stretch}.dashboardFinanceChart .financialDonutChart{width:100%;min-height:0;flex:1;overflow:hidden}.dashboardFinanceChart .financialLegend{flex:0 0 auto}
+@media(max-width:1300px){.dashboardKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboardKpiGrid>.uiStat,.dashboardKpiGrid>.uiStat:nth-child(n+5){grid-column:auto}.dashboardChartsGrid{grid-template-columns:1fr 1fr;grid-template-areas:"trend monthly" "finance finance"}}
+@media(max-width:900px){.dashboardKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboardChartsGrid{grid-template-columns:1fr;grid-template-areas:"trend" "monthly" "finance"}}
+@media(max-width:600px){.dashboardKpiGrid{grid-template-columns:1fr}}

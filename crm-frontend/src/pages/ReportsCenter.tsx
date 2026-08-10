@@ -1,358 +1,84 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  FaArrowRotateRight,
-  FaArrowTrendDown,
-  FaArrowTrendUp,
-  FaCalendarDays,
-  FaChartColumn,
-  FaCircleExclamation,
-  FaDownload,
-  FaFileInvoiceDollar,
-  FaFilter,
-  FaMedal,
-  FaReceipt,
-  FaUsers,
-  FaWallet,
-} from "react-icons/fa6";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-
-import { getCustomers, getInvoices } from "../services/api";
+import { Banknote, CalendarRange, FileText, ReceiptText, RefreshCw, Users } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ActionButton, ChartCard, EmptyState, GlassCard, PageHeader, StatCard } from "../components/ui/DesignSystem";
+import { getReportCharts, getReportSummary } from "../services/api";
+import { getCurrentUser } from "../utils/auth";
 import "./ReportsCenter.css";
 
-type Invoice = {
-  id?: number | string;
-  factor?: number | string;
-  sale?: number | string;
-  discount?: number | string;
-  createdAt?: string;
-  status?: string;
-  user?: {
-    id?: number | string;
-    name?: string;
-    phone?: string;
-  };
+type Period = "today" | "week" | "month" | "year" | "custom";
+type Summary = { totalSalesAmount:number; totalInvoices:number; totalCustomers:number; totalProducts:number };
+type Point = { key:string; label:string; revenue:number; invoices:number };
+type Charts = {
+  dailySales:Point[]; monthlySales:Point[]; yearlySales:Point[];
+  salespersonPerformance:Array<{userId:number;name:string;revenue:number;sales:number}>;
+  customerRanking:Array<{customerId:number;name:string;revenue:number;sales:number}>;
 };
 
-type Customer = {
-  id?: number | string;
-  name?: string;
-  phone?: string;
-  totalSale?: number | string;
-  invoiceCount?: number;
-};
+const emptySummary:Summary={totalSalesAmount:0,totalInvoices:0,totalCustomers:0,totalProducts:0};
+const emptyCharts:Charts={dailySales:[],monthlySales:[],yearlySales:[],salespersonPerformance:[],customerRanking:[]};
+const fa=(value:unknown)=>Number(value||0).toLocaleString("fa-IR");
+const money=(value:unknown)=>`${fa(value)} ریال`;
+const tooltipStyle={background:"#10182c",border:"1px solid rgba(139,92,246,.28)",borderRadius:12,color:"#f4f7ff"};
+const labels:Record<Period,string>={today:"امروز",week:"هفته جاری",month:"ماه جاری",year:"سال جاری",custom:"بازه سفارشی"};
+const dateValue=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+function periodRange(period:Period,customStart:string,customEnd:string){
+  const now=new Date(),start=new Date(now),end=new Date(now);
+  if(period==="today")start.setHours(0,0,0,0);
+  if(period==="week"){start.setDate(start.getDate()-((start.getDay()+1)%7));start.setHours(0,0,0,0)}
+  if(period==="month"){start.setDate(1);start.setHours(0,0,0,0)}
+  if(period==="year"){start.setMonth(0,1);start.setHours(0,0,0,0)}
+  return {start:period==="custom"?customStart:dateValue(start),end:period==="custom"?customEnd:dateValue(end)};
+}
 
-type RangeKey = "7" | "30" | "90" | "365" | "all";
+export default function ReportsCenter(){
+  const user=getCurrentUser();
+  const [period,setPeriod]=useState<Period>("month");
+  const [customStart,setCustomStart]=useState("");
+  const [customEnd,setCustomEnd]=useState("");
+  const [summary,setSummary]=useState<Summary>(emptySummary);
+  const [charts,setCharts]=useState<Charts>(emptyCharts);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+  const range=useMemo(()=>periodRange(period,customStart,customEnd),[period,customStart,customEnd]);
+  const trendData=period==="year"?charts.monthlySales:charts.dailySales;
+  const trendLabel=period==="year"?"روند ماهانه فروش":"روند روزانه فروش";
+  const averageInvoice=summary.totalInvoices?summary.totalSalesAmount/summary.totalInvoices:0;
+  const hasSales=summary.totalInvoices>0;
 
-const number = (value: unknown) => Number(value || 0);
-const formatNumber = (value: unknown) => number(value).toLocaleString("fa-IR");
-const formatMoney = (value: unknown) => `${formatNumber(value)} ریال`;
+  const load=useCallback(async()=>{
+    if(period==="custom"&&(!range.start||!range.end))return;
+    try{
+      setLoading(true);setError("");
+      const [summaryData,chartData]=await Promise.all([getReportSummary(range.start,range.end),getReportCharts(range.start,range.end)]);
+      setSummary(summaryData);setCharts(chartData);
+    }catch(e){console.error(e);setError("دریافت گزارش‌های فروش انجام نشد.")}
+    finally{setLoading(false)}
+  },[period,range.start,range.end]);
 
-const validDate = (value?: string) => {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
+  useEffect(()=>{void load();const refresh=()=>void load();window.addEventListener("tak:sales-imported",refresh);return()=>window.removeEventListener("tak:sales-imported",refresh)},[load]);
 
-const rangeLabels: Record<RangeKey, string> = {
-  "7": "۷ روز اخیر",
-  "30": "۳۰ روز اخیر",
-  "90": "۹۰ روز اخیر",
-  "365": "یک سال اخیر",
-  all: "کل دوره",
-};
-
-export default function ReportsCenter() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [range, setRange] = useState<RangeKey>("30");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const [invoiceResult, customerResult] = await Promise.all([
-        getInvoices(),
-        getCustomers(),
-      ]);
-      setInvoices(Array.isArray(invoiceResult) ? invoiceResult : []);
-      setCustomers(Array.isArray(customerResult) ? customerResult : []);
-      setUpdatedAt(new Date());
-    } catch (loadError) {
-      console.error("Reports loading failed:", loadError);
-      setError("دریافت اطلاعات گزارش‌ها با مشکل مواجه شد.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const filteredInvoices = useMemo(() => {
-    if (range === "all") return invoices;
-    const from = new Date();
-    from.setHours(0, 0, 0, 0);
-    from.setDate(from.getDate() - Number(range) + 1);
-    return invoices.filter((invoice) => {
-      const date = validDate(invoice.createdAt);
-      return date ? date >= from : false;
-    });
-  }, [invoices, range]);
-
-  const previousInvoices = useMemo(() => {
-    if (range === "all") return [];
-    const days = Number(range);
-    const currentStart = new Date();
-    currentStart.setHours(0, 0, 0, 0);
-    currentStart.setDate(currentStart.getDate() - days + 1);
-    const previousStart = new Date(currentStart);
-    previousStart.setDate(previousStart.getDate() - days);
-    return invoices.filter((invoice) => {
-      const date = validDate(invoice.createdAt);
-      return date ? date >= previousStart && date < currentStart : false;
-    });
-  }, [invoices, range]);
-
-  const analytics = useMemo(() => {
-    const totalSale = filteredInvoices.reduce((sum, item) => sum + number(item.sale), 0);
-    const totalDiscount = filteredInvoices.reduce(
-      (sum, item) => sum + number(item.discount),
-      0,
-    );
-    const averageInvoice = filteredInvoices.length
-      ? totalSale / filteredInvoices.length
-      : 0;
-    const uniqueCustomers = new Set(
-      filteredInvoices.map(
-        (item) => item.user?.id || item.user?.phone || item.user?.name,
-      ),
-    ).size;
-    const previousSale = previousInvoices.reduce(
-      (sum, item) => sum + number(item.sale),
-      0,
-    );
-    const growth = previousSale
-      ? ((totalSale - previousSale) / previousSale) * 100
-      : null;
-
-    return {
-      totalSale,
-      totalDiscount,
-      averageInvoice,
-      uniqueCustomers,
-      growth,
-    };
-  }, [filteredInvoices, previousInvoices]);
-
-  const dailyChart = useMemo(() => {
-    const map = new Map<string, { label: string; sale: number; invoices: number }>();
-    filteredInvoices.forEach((invoice) => {
-      const date = validDate(invoice.createdAt);
-      if (!date) return;
-      const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-      const current = map.get(key) || {
-        label: date.toLocaleDateString("fa-IR", { month: "short", day: "numeric" }),
-        sale: 0,
-        invoices: 0,
-      };
-      current.sale += number(invoice.sale);
-      current.invoices += 1;
-      map.set(key, current);
-    });
-    return [...map.entries()]
-      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-      .map(([, value]) => value);
-  }, [filteredInvoices]);
-
-  const topCustomers = useMemo(() => {
-    const map = new Map<
-      string,
-      { name: string; phone: string; sale: number; invoices: number }
-    >();
-    filteredInvoices.forEach((invoice) => {
-      const key = String(
-        invoice.user?.id || invoice.user?.phone || invoice.user?.name || "unknown",
-      );
-      const current = map.get(key) || {
-        name: invoice.user?.name || "مشتری بدون نام",
-        phone: invoice.user?.phone || "بدون شماره",
-        sale: 0,
-        invoices: 0,
-      };
-      current.sale += number(invoice.sale);
-      current.invoices += 1;
-      map.set(key, current);
-    });
-    return [...map.values()].sort((a, b) => b.sale - a.sale).slice(0, 8);
-  }, [filteredInvoices]);
-
-  const customerStats = useMemo(() => {
-    const active = customers.filter(
-      (customer) => number(customer.totalSale) > 0 || number(customer.invoiceCount) > 0,
-    ).length;
-    const withoutPhone = customers.filter(
-      (customer) => String(customer.phone || "").replace(/\D/g, "").length < 10,
-    ).length;
-    return { active, withoutPhone };
-  }, [customers]);
-
-  const exportCsv = () => {
-    const rows = [
-      ["شماره فاکتور", "نام مشتری", "شماره تماس", "فروش", "تخفیف", "تاریخ"],
-      ...filteredInvoices.map((invoice) => [
-        invoice.factor || invoice.id || "",
-        invoice.user?.name || "",
-        invoice.user?.phone || "",
-        number(invoice.sale),
-        number(invoice.discount),
-        invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString("fa-IR") : "",
-      ]),
-    ];
-    const csv = `\uFEFF${rows
-      .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
-      .join("\n")}`;
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `tak-crm-report-${range}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <main className="reportsPage" dir="rtl">
-      <header className="reportsHero">
-        <div>
-          <span className="reportsEyebrow"><FaChartColumn /> مرکز گزارش‌گیری TAK</span>
-          <h1>گزارش مدیریتی فروش</h1>
-          <p>عملکرد فروش، مشتریان و فاکتورها را در بازه‌های مختلف بررسی و خروجی دریافت کنید.</p>
-        </div>
-        <div className="reportsHeroActions">
-          <button type="button" className="reportsSecondaryButton" onClick={() => void load()}>
-            <FaArrowRotateRight /> بروزرسانی
-          </button>
-          <button type="button" className="reportsPrimaryButton" onClick={exportCsv} disabled={!filteredInvoices.length}>
-            <FaDownload /> خروجی CSV
-          </button>
-        </div>
-      </header>
-
-      <section className="reportsToolbar">
-        <div className="reportsRangeTitle">
-          <FaCalendarDays />
-          <span><strong>بازه گزارش</strong><small>{rangeLabels[range]}</small></span>
-        </div>
-        <div className="reportsRangeButtons">
-          {(Object.keys(rangeLabels) as RangeKey[]).map((key) => (
-            <button key={key} type="button" className={range === key ? "active" : ""} onClick={() => setRange(key)}>
-              {rangeLabels[key]}
-            </button>
-          ))}
-        </div>
-        <div className="reportsUpdated">
-          <FaFilter /> {updatedAt ? `آخرین بروزرسانی ${updatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}` : "در انتظار دریافت اطلاعات"}
-        </div>
+  const noData=<EmptyState title="داده فروش برای این بازه وجود ندارد" description="بازه دیگری انتخاب کنید یا گزارش فروش جدیدی وارد کنید."/>;
+  return <main className="reportsPage executiveReports" dir="rtl">
+    <PageHeader eyebrow="EXECUTIVE SALES ANALYTICS" title="مرکز گزارش‌های فروش" description={user?.role==="ADMIN"?"تحلیل اجرایی تمام فروش‌های ثبت‌شده سازمان":"تحلیل فروش‌های شخصی ثبت‌شده شما"} actions={<ActionButton className="secondary" onClick={()=>void load()} disabled={loading}><RefreshCw className={loading?"spin":""} size={15}/> بروزرسانی</ActionButton>}/>
+    <GlassCard className="reportControls">
+      <div className="periodSelector">{(Object.keys(labels) as Period[]).map(key=><button type="button" key={key} className={period===key?"active":""} onClick={()=>setPeriod(key)}>{labels[key]}</button>)}</div>
+      {period==="custom"&&<div className="customDates"><label>از<input type="date" value={customStart} onChange={event=>setCustomStart(event.target.value)}/></label><label>تا<input type="date" value={customEnd} onChange={event=>setCustomEnd(event.target.value)}/></label></div>}
+      <span className="reportDatabaseBadge"><CalendarRange/> داده زنده دیتابیس</span>
+    </GlassCard>
+    {error?<EmptyState title="گزارش بارگذاری نشد" description={error}/>:<>
+      <section className="uiStats reportKpis">
+        <StatCard loading={loading} tone="green" title="فروش کل" value={money(summary.totalSalesAmount)} hint={labels[period]} icon={<Banknote/>} data={trendData.map(point=>point.revenue)}/>
+        <StatCard loading={loading} tone="orange" title="تعداد فاکتور" value={fa(summary.totalInvoices)} hint="فاکتور ثبت‌شده" icon={<FileText/>} data={trendData.map(point=>point.invoices)}/>
+        <StatCard loading={loading} tone="blue" title="تعداد مشتری" value={fa(summary.totalCustomers)} hint="مشتری خریدار یکتا" icon={<Users/>}/>
+        <StatCard loading={loading} tone="purple" title="میانگین مبلغ فاکتور" value={money(averageInvoice)} hint="فروش کل ÷ تعداد فاکتور" icon={<ReceiptText/>}/>
       </section>
-
-      {error ? (
-        <section className="reportsState reportsError">
-          <FaCircleExclamation />
-          <strong>گزارش بارگذاری نشد</strong>
-          <p>{error}</p>
-          <button type="button" onClick={() => void load()}>تلاش دوباره</button>
-        </section>
-      ) : loading ? (
-        <section className="reportsSkeleton">
-          {Array.from({ length: 8 }).map((_, index) => <span key={index} />)}
-        </section>
-      ) : (
-        <>
-          <section className="reportsKpiGrid">
-            <article className="reportsKpiCard">
-              <span className="reportsKpiIcon green"><FaWallet /></span>
-              <div><small>فروش دوره</small><strong>{formatMoney(analytics.totalSale)}</strong><em>{filteredInvoices.length.toLocaleString("fa-IR")} فاکتور</em></div>
-            </article>
-            <article className="reportsKpiCard">
-              <span className="reportsKpiIcon blue"><FaReceipt /></span>
-              <div><small>میانگین هر فاکتور</small><strong>{formatMoney(analytics.averageInvoice)}</strong><em>ارزش متوسط سفارش</em></div>
-            </article>
-            <article className="reportsKpiCard">
-              <span className="reportsKpiIcon purple"><FaUsers /></span>
-              <div><small>مشتریان خریدار</small><strong>{analytics.uniqueCustomers.toLocaleString("fa-IR")}</strong><em>{customerStats.active.toLocaleString("fa-IR")} مشتری فعال کل</em></div>
-            </article>
-            <article className="reportsKpiCard">
-              <span className="reportsKpiIcon orange"><FaFileInvoiceDollar /></span>
-              <div><small>تخفیف ثبت‌شده</small><strong>{formatMoney(analytics.totalDiscount)}</strong><em>{customerStats.withoutPhone.toLocaleString("fa-IR")} شماره ناقص</em></div>
-            </article>
-          </section>
-
-          <section className="reportsGrowthCard">
-            <div className={analytics.growth !== null && analytics.growth < 0 ? "down" : "up"}>
-              {analytics.growth !== null && analytics.growth < 0 ? <FaArrowTrendDown /> : <FaArrowTrendUp />}
-            </div>
-            <span>
-              <small>مقایسه با دوره قبل</small>
-              <strong>{analytics.growth === null ? "داده کافی نیست" : `${Math.abs(analytics.growth).toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪ ${analytics.growth >= 0 ? "رشد" : "کاهش"}`}</strong>
-            </span>
-            <p>{range === "all" ? "برای کل دوره، مقایسه دوره قبل محاسبه نمی‌شود." : "این شاخص فروش بازه انتخابی را با بازه زمانی هم‌اندازه قبل از آن مقایسه می‌کند."}</p>
-          </section>
-
-          <section className="reportsContentGrid">
-            <article className="reportsPanel reportsChartPanel">
-              <div className="reportsPanelHeader">
-                <div><FaChartColumn /><span><strong>روند فروش</strong><small>فروش روزانه در بازه انتخابی</small></span></div>
-              </div>
-              {dailyChart.length ? (
-                <div className="reportsChart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={dailyChart} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="reportSale" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="currentColor" stopOpacity={0.34} />
-                          <stop offset="95%" stopColor="currentColor" stopOpacity={0.02} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="4 4" vertical={false} />
-                      <XAxis dataKey="label" tickLine={false} axisLine={false} />
-                      <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => Number(value).toLocaleString("fa-IR", { notation: "compact" })} />
-                      <Tooltip formatter={(value) => [formatMoney(value), "فروش"]} />
-                      <Area type="monotone" dataKey="sale" stroke="currentColor" strokeWidth={3} fill="url(#reportSale)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : <div className="reportsEmpty">برای این بازه اطلاعات فروش ثبت نشده است.</div>}
-            </article>
-
-            <article className="reportsPanel reportsTopPanel">
-              <div className="reportsPanelHeader">
-                <div><FaMedal /><span><strong>مشتریان برتر</strong><small>بر اساس فروش بازه انتخابی</small></span></div>
-              </div>
-              <div className="reportsTopList">
-                {topCustomers.length ? topCustomers.map((customer, index) => (
-                  <div className="reportsTopRow" key={`${customer.phone}-${index}`}>
-                    <span className="reportsRank">{(index + 1).toLocaleString("fa-IR")}</span>
-                    <span className="reportsAvatar">{customer.name.trim().charAt(0) || "؟"}</span>
-                    <div><strong>{customer.name}</strong><small>{customer.phone} · {customer.invoices.toLocaleString("fa-IR")} فاکتور</small></div>
-                    <b>{formatMoney(customer.sale)}</b>
-                  </div>
-                )) : <div className="reportsEmpty">مشتری خریداری در این بازه وجود ندارد.</div>}
-              </div>
-            </article>
-          </section>
-        </>
-      )}
-    </main>
-  );
+      {!loading&&!hasSales?<GlassCard className="reportGlobalEmpty">{noData}</GlassCard>:<section className="reportExecutiveCharts">
+        <ChartCard title={trendLabel} subtitle={labels[period]}><div className="reportChartBox">{trendData.length?<ResponsiveContainer width="100%" height="100%"><AreaChart data={trendData}><defs><linearGradient id="salesExecutiveArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#22d3ee" stopOpacity=".5"/><stop offset="1" stopColor="#3b82f6" stopOpacity="0"/></linearGradient></defs><CartesianGrid strokeDasharray="3 8" vertical={false}/><XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill:"#8793ad",fontSize:9}}/><YAxis hide/><Tooltip contentStyle={tooltipStyle} formatter={value=>[money(value),"فروش"]}/><Area type="monotone" dataKey="revenue" stroke="#22d3ee" strokeWidth={3} fill="url(#salesExecutiveArea)" activeDot={{r:6}}/></AreaChart></ResponsiveContainer>:noData}</div></ChartCard>
+        <ChartCard title="عملکرد کارشناسان فروش" subtitle="مقایسه درآمد"><div className="reportChartBox">{charts.salespersonPerformance.length?<ResponsiveContainer width="100%" height="100%"><BarChart data={charts.salespersonPerformance.slice(0,10)}><CartesianGrid strokeDasharray="3 8" vertical={false}/><XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill:"#8793ad",fontSize:9}}/><YAxis hide/><Tooltip contentStyle={tooltipStyle} formatter={value=>[money(value),"فروش"]}/><Bar dataKey="revenue" fill="#8b5cf6" radius={[8,8,0,0]} barSize={22}/></BarChart></ResponsiveContainer>:noData}</div></ChartCard>
+        <ChartCard title="رتبه‌بندی مشتریان" subtitle="بر اساس مبلغ خرید"><div className="reportCustomerChart">{charts.customerRanking.length?<ResponsiveContainer width="100%" height="100%"><BarChart data={charts.customerRanking.slice(0,10)} layout="vertical" margin={{left:10}}><CartesianGrid strokeDasharray="3 8" horizontal={false}/><XAxis type="number" hide/><YAxis type="category" dataKey="name" width={120} axisLine={false} tickLine={false} tick={{fill:"#aab4c9",fontSize:9}}/><Tooltip contentStyle={tooltipStyle} formatter={value=>[money(value),"خرید"]}/><Bar dataKey="revenue" fill="#22d3ee" radius={[8,8,8,8]} barSize={14}/></BarChart></ResponsiveContainer>:noData}</div></ChartCard>
+        <ChartCard title="آمار فاکتورها" subtitle="تعداد فاکتور در بازه"><div className="reportCustomerChart">{trendData.length?<ResponsiveContainer width="100%" height="100%"><AreaChart data={trendData}><defs><linearGradient id="invoiceExecutiveArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#a78bfa" stopOpacity=".55"/><stop offset="1" stopColor="#a78bfa" stopOpacity="0"/></linearGradient></defs><CartesianGrid strokeDasharray="3 8" vertical={false}/><XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill:"#8793ad",fontSize:9}}/><YAxis hide/><Tooltip contentStyle={tooltipStyle}/><Area type="monotone" dataKey="invoices" name="فاکتور" stroke="#a78bfa" strokeWidth={3} fill="url(#invoiceExecutiveArea)"/></AreaChart></ResponsiveContainer>:noData}</div></ChartCard>
+      </section>}
+    </>}
+  </main>;
 }
