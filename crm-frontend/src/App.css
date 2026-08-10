@@ -54,8 +54,9 @@ a {
   overflow-x: hidden;
   overflow-y: auto;
   background:
-    radial-gradient(circle at 15% 0%, rgba(15, 106, 71, 0.035), transparent 28%),
-    #f3f6f4;
+    radial-gradient(circle at 12% 0%, rgba(124, 58, 237, 0.14), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(6, 182, 212, 0.07), transparent 23%),
+    linear-gradient(145deg, #090e1d, #050812 75%);
 }
 
 .crmSidebar {

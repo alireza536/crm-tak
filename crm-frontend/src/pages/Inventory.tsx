@@ -3,14 +3,14 @@ import type { FormEvent } from "react";
 import {
   FaArrowDown,
   FaArrowUp,
-  FaBoxesStacked,
   FaDownload,
-  FaMagnifyingGlass,
   FaPen,
   FaPlus,
-  FaTriangleExclamation,
   FaXmark,
 } from "react-icons/fa6";
+import { AlertTriangle, Boxes, CircleDollarSign, PackageCheck, PackageX } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ActionButton, Badge, ChartCard, DataTable, GlassCard, PageHeader, SearchBar, StatCard } from "../components/ui/DesignSystem";
 
 import "./Inventory.css";
 
@@ -120,6 +120,26 @@ export default function Inventory() {
     out: products.filter((item) => statusOf(item) === "out").length,
   }), [products]);
 
+  const movementChart = useMemo(() => movements.slice(0, 10).reverse().map((item, index) => ({
+    name: `${index + 1}`,
+    in: item.type === "in" ? item.quantity : 0,
+    out: item.type === "out" ? item.quantity : 0,
+  })), [movements]);
+
+  const consumedProducts = useMemo(() => {
+    const totals = movements.filter((item) => item.type === "out").reduce<Record<string, number>>((acc, item) => {
+      acc[item.productName] = (acc[item.productName] || 0) + item.quantity;
+      return acc;
+    }, {});
+    return Object.entries(totals).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+  }, [movements]);
+
+  const stockStatusChart = useMemo(() => [
+    { name: "موجود", value: products.filter((item) => statusOf(item) === "available").length, color: "#34d399" },
+    { name: "کم‌موجود", value: stats.low, color: "#f59e0b" },
+    { name: "تمام‌شده", value: stats.out, color: "#fb7185" },
+  ], [products, stats.low, stats.out]);
+
   const openNewProduct = () => {
     setEditingProduct(null);
     setShowProductModal(true);
@@ -195,33 +215,28 @@ export default function Inventory() {
   };
 
   return (
-    <section className="inventoryPage">
-      <header className="inventoryHeader">
-        <div>
-          <span className="inventoryEyebrow"><FaBoxesStacked /> کنترل فیزیکی کالا</span>
-          <h1>انبار و موجودی</h1>
-          <p>ثبت تعداد کالا، ورود و خروج، محل نگهداری و هشدار کمبود؛ بدون بخش مالی و حسابداری</p>
-        </div>
-        <div className="inventoryActions">
-          <button className="inventoryGhost" type="button" onClick={exportCsv}><FaDownload /> خروجی CSV</button>
-          <button className="inventoryGhost" type="button" onClick={() => setShowMovementModal(true)}><FaArrowDown /> ثبت ورود/خروج</button>
-          <button className="inventoryPrimary" type="button" onClick={openNewProduct}><FaPlus /> کالای جدید</button>
-        </div>
-      </header>
+    <section className="inventoryPage executiveInventory" dir="rtl">
+      <PageHeader eyebrow="WAREHOUSE CONTROL" title="مدیریت موجودی انبار" description="کنترل زنده موجودی، گردش کالا و هشدارهای تأمین" actions={<><ActionButton className="secondary" type="button" onClick={exportCsv}><FaDownload /> خروجی CSV</ActionButton><ActionButton className="secondary" type="button" onClick={() => setShowMovementModal(true)}><FaArrowDown /> ثبت ورود/خروج</ActionButton><ActionButton type="button" onClick={openNewProduct}><FaPlus /> کالای جدید</ActionButton></>} />
 
-      <div className="inventoryStats simpleStats">
-        <article><small>تعداد اقلام</small><strong>{stats.totalProducts.toLocaleString("fa-IR")}</strong><span>کالای ثبت‌شده</span></article>
-        <article><small>تعداد کل واحدها</small><strong>{stats.totalUnits.toLocaleString("fa-IR")}</strong><span>مجموع موجودی فیزیکی</span></article>
-        <article className="warning"><small>رو به اتمام</small><strong>{stats.low.toLocaleString("fa-IR")}</strong><span>زیر حداقل موجودی</span></article>
-        <article className="danger"><small>ناموجود</small><strong>{stats.out.toLocaleString("fa-IR")}</strong><span>موجودی صفر</span></article>
-      </div>
+      <section className="uiStats inventoryKpis">
+        <StatCard tone="blue" title="تعداد کل کالاها" value={stats.totalProducts.toLocaleString("fa-IR")} hint="کالای ثبت‌شده" icon={<Boxes />} data={products.map((_,index)=>index+1)} />
+        <StatCard tone="green" title="موجودی فعلی" value={stats.totalUnits.toLocaleString("fa-IR")} hint="واحد فیزیکی سالم" icon={<PackageCheck />} data={products.map(product=>product.stock)} />
+        <StatCard tone="orange" title="کالاهای کم‌موجود" value={stats.low.toLocaleString("fa-IR")} hint={`${stats.out.toLocaleString("fa-IR")} کالای بحرانی`} icon={<PackageX />} data={products.map(product=>Math.max(product.minStock-product.stock,0))} />
+        <StatCard tone="green" title="ارزش انبار" value="—" hint="داده قیمت در مدل موجود نیست" icon={<CircleDollarSign />} />
+      </section>
 
       {(stats.low > 0 || stats.out > 0) && (
-        <div className="inventoryAlert"><FaTriangleExclamation /><div><strong>هشدار موجودی</strong><span>{(stats.low + stats.out).toLocaleString("fa-IR")} کالا نیاز به بررسی یا تأمین دارد.</span></div></div>
+        <GlassCard className="inventoryAlert"><AlertTriangle /><div><strong>هشدار زنده موجودی</strong><span>{(stats.low + stats.out).toLocaleString("fa-IR")} کالا نیاز به بررسی یا تأمین دارد.</span></div><i /></GlassCard>
       )}
 
+      <section className="inventoryCharts">
+        <ChartCard title="گردش کالا" subtitle="آخرین ورود و خروج‌ها"><div className="inventoryChartBox">{movementChart.length ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={movementChart}><defs><linearGradient id="movementIn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#34d399" stopOpacity=".45"/><stop offset="1" stopColor="#34d399" stopOpacity="0"/></linearGradient></defs><XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill:"#71809e",fontSize:9}}/><YAxis hide/><Tooltip contentStyle={{background:"#10182c",border:"1px solid rgba(139,92,246,.28)",borderRadius:12,color:"#f4f7ff"}}/><Area type="monotone" dataKey="in" name="ورود" stroke="#34d399" strokeWidth={3} fill="url(#movementIn)"/><Area type="monotone" dataKey="out" name="خروج" stroke="#fb7185" strokeWidth={2.5} fill="transparent"/></AreaChart></ResponsiveContainer> : null}</div></ChartCard>
+        <ChartCard title="کالاهای پرمصرف" subtitle="بر اساس گردش خروج"><div className="inventoryChartBox">{consumedProducts.length ? <ResponsiveContainer width="100%" height="100%"><BarChart data={consumedProducts} layout="vertical"><XAxis type="number" hide/><YAxis type="category" dataKey="name" width={105} axisLine={false} tickLine={false} tick={{fill:"#8490aa",fontSize:9}}/><Tooltip cursor={{fill:"rgba(139,92,246,.06)"}} contentStyle={{background:"#10182c",border:"1px solid rgba(34,211,238,.25)",borderRadius:12,color:"#f4f7ff"}}/><Bar dataKey="value" name="تعداد خروج" fill="#8b5cf6" radius={[7,7,7,7]} barSize={13}/></BarChart></ResponsiveContainer> : <div className="inventoryChartEmpty">گردش خروجی ثبت نشده است.</div>}</div></ChartCard>
+        <ChartCard title="وضعیت موجودی" subtitle="سلامت انبار"><div className="inventoryDonut"><ResponsiveContainer width="100%" height={180}><PieChart><Pie data={stockStatusChart} dataKey="value" innerRadius={48} outerRadius={70} paddingAngle={5}>{stockStatusChart.map((item) => <Cell key={item.name} fill={item.color}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer><div>{stockStatusChart.map(item=><span key={item.name}><i style={{background:item.color}}/>{item.name}<b>{item.value.toLocaleString("fa-IR")}</b></span>)}</div></div></ChartCard>
+      </section>
+
       <div className="inventoryToolbar">
-        <label className="inventorySearch"><FaMagnifyingGlass /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="جستجو در نام، SKU، برند یا محل..." /></label>
+        <SearchBar className="inventorySearch" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="جستجو در نام، SKU، برند یا محل..." />
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
           <option value="all">همه وضعیت‌ها</option><option value="available">موجود</option><option value="low">رو به اتمام</option><option value="out">ناموجود</option>
         </select>
@@ -231,10 +246,9 @@ export default function Inventory() {
       </div>
 
       <div className="inventoryContent">
-        <div className="inventoryTableCard">
+        <GlassCard className="inventoryTableCard">
           <div className="inventoryCardTitle"><div><strong>فهرست موجودی</strong><span>{filteredProducts.length.toLocaleString("fa-IR")} نتیجه</span></div></div>
-          <div className="inventoryTableWrap">
-            <table className="inventoryTable simpleTable">
+          <DataTable className="inventoryTableWrap">
               <thead><tr><th>کالا</th><th>دسته/برند</th><th>موجودی</th><th>محل نگهداری</th><th>وضعیت</th><th></th></tr></thead>
               <tbody>{filteredProducts.map((product) => {
                 const status = statusOf(product);
@@ -243,22 +257,21 @@ export default function Inventory() {
                   <td><strong>{product.category}</strong><small>{product.brand}</small></td>
                   <td><strong>{product.stock.toLocaleString("fa-IR")}</strong><small>حداقل: {product.minStock.toLocaleString("fa-IR")}</small></td>
                   <td><strong>{product.location || "—"}</strong><small>{product.updatedAt}</small></td>
-                  <td><span className={`inventoryStatus ${status}`}>{status === "available" ? "موجود" : status === "low" ? "رو به اتمام" : "ناموجود"}</span></td>
+                  <td><Badge tone={status === "available" ? "success" : status === "low" ? "warning" : "danger"}>{status === "available" ? "موجود" : status === "low" ? "کم‌موجود" : "تمام‌شده"}</Badge></td>
                   <td><button className="inventoryIconButton" type="button" onClick={() => openEditProduct(product)} aria-label="ویرایش"><FaPen /></button></td>
                 </tr>;
               })}</tbody>
-            </table>
-          </div>
-        </div>
+          </DataTable>
+        </GlassCard>
 
-        <aside className="inventoryMovements">
+        <GlassCard className="inventoryMovements">
           <div className="inventoryCardTitle"><div><strong>آخرین گردش کالا</strong><span>ورود و خروج‌های ثبت‌شده</span></div></div>
           <div className="movementList">{movements.slice(0, 10).map((movement) => <article key={movement.id}>
             <span className={`movementIcon ${movement.type}`}>{movement.type === "in" ? <FaArrowDown /> : <FaArrowUp />}</span>
             <div><strong>{movement.productName}</strong><p>{movement.reason}</p><small>{movement.operator} · {movement.date}</small></div>
             <b className={movement.type}>{movement.type === "in" ? "+" : "−"}{movement.quantity.toLocaleString("fa-IR")}</b>
           </article>)}</div>
-        </aside>
+        </GlassCard>
       </div>
 
       {showProductModal && (
