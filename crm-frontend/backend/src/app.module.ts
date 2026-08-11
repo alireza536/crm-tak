@@ -13,13 +13,14 @@ import { QuotationModule } from './quotation/quotation.module';
 import { PaymentsModule } from './payments/payments.module';
 import { Customer, CustomerHistory, CustomerImport, FollowUp, Invoice, Payment, Quotation, QuotationItem, Sale, SalesReportImport, User } from './entities';
 import { AddUserAuthenticationColumns1786410060000 } from './migrations/202608110001-AddUserAuthenticationColumns';
+import { RepairUserAuthenticationSchema1786755660000 } from './migrations/202608150001-RepairUserAuthenticationSchema';
 @Module({
   imports:[
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: [User, Customer, CustomerHistory, CustomerImport, FollowUp, Sale, SalesReportImport, Invoice, Payment, Quotation, QuotationItem],
-      migrations: [AddUserAuthenticationColumns1786410060000],
+      migrations: [AddUserAuthenticationColumns1786410060000, RepairUserAuthenticationSchema1786755660000],
       migrationsRun: true,
       synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
     }),
