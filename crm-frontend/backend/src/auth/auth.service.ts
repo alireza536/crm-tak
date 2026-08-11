@@ -13,9 +13,14 @@ export class AuthService {
   ) {}
 
   async login(phone: string, password: string) {
-    const user = await this.users.findOneBy({ phone });
+    const toLatinDigits = (value: string) => String(value ?? '')
+      .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+      .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)));
+    const normalizedPhone = toLatinDigits(phone).replace(/\D/g, '');
+    const normalizedPassword = toLatinDigits(password).trim();
+    const user = await this.users.findOneBy({ phone: normalizedPhone });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await bcrypt.compare(normalizedPassword, user.password))) {
       throw new UnauthorizedException('Phone or password is incorrect');
     }
 
