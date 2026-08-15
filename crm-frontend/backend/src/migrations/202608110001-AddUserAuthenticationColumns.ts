@@ -3,7 +3,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddUserAuthenticationColumns1786410060000 implements MigrationInterface {
   name = 'AddUserAuthenticationColumns1786410060000';
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
+  async up(queryRunner: QueryRunner): Promise<void> {
 
     await queryRunner.query(`
       ALTER TABLE "User"
@@ -22,21 +22,18 @@ export class AddUserAuthenticationColumns1786410060000 implements MigrationInter
 
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
+  async down(queryRunner: QueryRunner): Promise<void> {
 
     await queryRunner.query(`
-      ALTER TABLE "User"
-      DROP COLUMN IF EXISTS "createdAt"
+      ALTER TABLE "User" DROP COLUMN IF EXISTS "createdAt"
     `);
 
     await queryRunner.query(`
-      ALTER TABLE "User"
-      DROP COLUMN IF EXISTS "role"
+      ALTER TABLE "User" DROP COLUMN IF EXISTS "role"
     `);
 
     await queryRunner.query(`
-      ALTER TABLE "User"
-      DROP COLUMN IF EXISTS "passwordHash"
+      ALTER TABLE "User" DROP COLUMN IF EXISTS "passwordHash"
     `);
 
   }
