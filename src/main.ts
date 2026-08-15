@@ -15,19 +15,29 @@ const initialUsers = [
 async function ensureMissingInitialUsers(app: NestExpressApplication) {
   const users = app.get(DataSource).getRepository(User);
   for (const initialUser of initialUsers) {
-    const existing = await users.findOne({
-      where: [{ phone: initialUser.phone }, { personCode: initialUser.personCode }],
-    });
-    if (existing) continue;
+    const existing = await users.findOneBy({ phone: initialUser.phone });
 
-    await users.save(users.create({
-      name: initialUser.name,
-      phone: initialUser.phone,
-      personCode: initialUser.personCode,
-      role: initialUser.role,
-      password: await bcrypt.hash(initialUser.password, 10),
-      address: '',
-    }));
+    if (existing) {
+      existing.name = initialUser.name;
+      existing.role = initialUser.role;
+      if (!existing.password) {
+        existing.password = await bcrypt.hash(initialUser.password, 10);
+      }
+      existing.address ??= '';
+      await users.save(existing);
+      continue;
+    }
+
+    await users.save(
+      users.create({
+        name: initialUser.name,
+        phone: initialUser.phone,
+        personCode: initialUser.personCode,
+        role: initialUser.role,
+        password: await bcrypt.hash(initialUser.password, 10),
+        address: '',
+      }),
+    );
   }
 }
 
