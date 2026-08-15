@@ -7,6 +7,16 @@ export class AddUserAuthenticationColumns1786410060000 implements MigrationInter
 
     await queryRunner.query(`
       ALTER TABLE "User"
+      ADD COLUMN IF NOT EXISTS "address" TEXT
+    `);
+
+    await queryRunner.query(`
+      ALTER TABLE "User"
+      ADD COLUMN IF NOT EXISTS "personCode" TEXT
+    `);
+
+    await queryRunner.query(`
+      ALTER TABLE "User"
       ADD COLUMN IF NOT EXISTS "passwordHash" TEXT DEFAULT ''
     `);
 
