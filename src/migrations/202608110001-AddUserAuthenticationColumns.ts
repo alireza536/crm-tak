@@ -21,10 +21,10 @@ export class AddUserAuthenticationColumns1786410060000 implements MigrationInter
     await queryRunner.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT NOT NULL DEFAULT ''`);
     await queryRunner.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "role" TEXT NOT NULL DEFAULT 'SALES'`);
     await queryRunner.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP NOT NULL DEFAULT now()`);
-    await queryRunner.query(`UPDATE "User" SET "name" = 'محبوبه حسین زاده', "personCode" = 'SALES001', "role" = 'SALES', "passwordHash" = '$2b$10$kiLRkoLMQBPKKRlNrVwJNOBekrVBivuW0emxERIAxrf.CDXAorQe6' WHERE "phone" = '09155255645'`);
-    await queryRunner.query(`UPDATE "User" SET "name" = 'امیر ابراهیم محمدی', "personCode" = 'SALES002', "role" = 'SALES', "passwordHash" = '$2b$10$yabrwCwIOJHalUSTGYNax.C65gEHJb6iwFmjc6lv7hTnpCvpBHkhi' WHERE "phone" = '09058531174'`);
-    await queryRunner.query(`UPDATE "User" SET "name" = 'علی بیسجردی', "personCode" = 'ADMIN001', "role" = 'ADMIN', "passwordHash" = '$2b$10$v9Cl5lJUOKimQnOHPUdBZuXE0SJV6.F1cbV3sjWfJjCWZlphD/eLi' WHERE "phone" = '09156440664'`);
-    await queryRunner.query(`UPDATE "User" SET "name" = 'علیرضا خورشیدی', "personCode" = 'ADMIN002', "role" = 'ADMIN', "passwordHash" = '$2b$10$jqhzGUTixjjmZlwkp5qBdO9IPcxw0gK4X6e5natIJ2W3SDTL80f7u' WHERE "phone" = '09214430376'`);
+    await queryRunner.query(`UPDATE "User" SET "name" = 'محبوبه حسین زاده', "role" = 'SALES', "passwordHash" = '$2b$10$kiLRkoLMQBPKKRlNrVwJNOBekrVBivuW0emxERIAxrf.CDXAorQe6' WHERE "phone" = '09155255645'`);
+    await queryRunner.query(`UPDATE "User" SET "name" = 'امیر ابراهیم محمدی', "role" = 'SALES', "passwordHash" = '$2b$10$yabrwCwIOJHalUSTGYNax.C65gEHJb6iwFmjc6lv7hTnpCvpBHkhi' WHERE "phone" = '09058531174'`);
+    await queryRunner.query(`UPDATE "User" SET "name" = 'علی بیسجردی', "role" = 'ADMIN', "passwordHash" = '$2b$10$v9Cl5lJUOKimQnOHPUdBZuXE0SJV6.F1cbV3sjWfJjCWZlphD/eLi' WHERE "phone" = '09156440664'`);
+    await queryRunner.query(`UPDATE "User" SET "name" = 'علیرضا خورشیدی', "role" = 'ADMIN', "passwordHash" = '$2b$10$jqhzGUTixjjmZlwkp5qBdO9IPcxw0gK4X6e5natIJ2W3SDTL80f7u' WHERE "phone" = '09214430376'`);
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
