@@ -2,13 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Invoice } from '../../entities/invoice.entity';
-import { User } from '../../entities/user.entity';
 import { Customer } from '../../entities/customer.entity';
 
 @Injectable()
 export class DashboardService {
   constructor(
-    @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(Invoice) private readonly invoices: Repository<Invoice>,
     @InjectRepository(Customer) private readonly customerRepository: Repository<Customer>,
   ) {}
@@ -16,11 +14,12 @@ export class DashboardService {
   async getDashboard(user: any) {
     const [customers, invoiceSummary] = await Promise.all([
       user.role === 'ADMIN'
-        ? this.users.count()
+        ? this.customerRepository.count()
         : this.customerRepository.countBy({ salespersonId: user.id }),
       this.invoices.createQueryBuilder('invoice')
+        .innerJoin('invoice.customer', 'customer')
         .select('COALESCE(SUM(invoice.total), 0)', 'sales')
-        .where(user.role === 'ADMIN' ? '1 = 1' : 'invoice.userId = :userId', { userId: user.id })
+        .where(user.role === 'ADMIN' ? '1 = 1' : 'customer.salespersonId = :userId', { userId: user.id })
         .getRawOne<{ sales: string }>(),
     ]);
 
@@ -28,17 +27,18 @@ export class DashboardService {
   }
 
   async getMonthlySales(user: any) {
-    const invoices = await this.invoices.find({
-      where: user.role === 'ADMIN' ? {} : { userId: user.id },
-      select: { total: true, createdAt: true },
-    });
+    const query = this.invoices.createQueryBuilder('invoice')
+      .innerJoin('invoice.customer', 'customer')
+      .select(['invoice.total', 'invoice.invoiceDate', 'invoice.createdAt']);
+    if (user.role !== 'ADMIN') query.where('customer.salespersonId = :userId', { userId: user.id });
+    const invoices = await query.getMany();
     const months = [
       'ÙØ±ÙˆØ±Ø¯ÛŒÙ†', 'Ø§Ø±Ø¯ÛŒØ¨Ù‡Ø´Øª', 'Ø®Ø±Ø¯Ø§Ø¯', 'ØªÛŒØ±', 'Ù…Ø±Ø¯Ø§Ø¯', 'Ø´Ù‡Ø±ÛŒÙˆØ±',
       'Ù…Ù‡Ø±', 'Ø¢Ø¨Ø§Ù†', 'Ø¢Ø°Ø±', 'Ø¯ÛŒ', 'Ø¨Ù‡Ù…Ù†', 'Ø§Ø³ÙÙ†Ø¯',
     ];
     const sales = new Array<number>(12).fill(0);
     invoices.forEach((invoice) => {
-      const month = new Date(invoice.createdAt).getMonth();
+      const month = new Date(invoice.invoiceDate || invoice.createdAt).getMonth();
       if (month >= 0 && month < 12) sales[month] += invoice.total;
     });
     return months.map((month, index) => ({ month, sale: sales[index] }));

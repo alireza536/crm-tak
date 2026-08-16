@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { getJwtSecret } from './jwt-secret';
 
 
 
@@ -25,7 +26,7 @@ ExtractJwt.fromAuthHeaderAsBearerToken(),
 ignoreExpiration:false,
 
 
-secretOrKey: process.env.JWT_SECRET || 'CRM_SECRET_KEY'
+secretOrKey: getJwtSecret()
 
 
 });

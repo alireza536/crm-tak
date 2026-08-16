@@ -1,3 +1,4 @@
+
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { CustomerHistory } from './customer-history.entity';
 import { FollowUp } from './follow-up.entity';

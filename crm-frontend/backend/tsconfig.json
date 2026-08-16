@@ -23,6 +23,14 @@
     "src/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/seed-*.ts",
+    "src/create-admin.ts",
+    "src/validate-sales-import-files.ts",
+    "src/sms.controller.ts",
+    "src/sms.service.ts",
+    "src/uploads/excel.controller.ts",
+    "src/uploads/sales.controller.ts",
+    "src/uploads/sales.service.ts"
   ]
 }

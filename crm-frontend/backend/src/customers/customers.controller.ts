@@ -4,6 +4,7 @@ import { CustomersService } from './customers.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../auth/roles.decorator';
+import { excelUploadOptions } from '../uploads/excel-upload-options';
 
 @Controller('customers')
 @UseGuards(JwtAuthGuard, RoleGuard)
@@ -18,7 +19,7 @@ export class CustomersController {
 
   @Post('import/preview')
   @Roles('ADMIN')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', excelUploadOptions))
   previewImport(@UploadedFile() file: Express.Multer.File) {
     return this.customersService.previewImport(file);
   }
@@ -65,6 +66,11 @@ export class CustomersController {
   @Get(':id/history')
   getHistory(@Param('id') id: string, @Req() req: any) {
     return this.customersService.getHistory(Number(id), req.user);
+  }
+
+  @Post(':id/notes')
+  addNote(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+    return this.customersService.addNote(Number(id), body, req.user);
   }
 
   @Get(':id')

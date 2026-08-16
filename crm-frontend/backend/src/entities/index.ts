@@ -8,4 +8,5 @@ export { Quotation } from './quotation.entity';
 export { QuotationItem } from './quotation-item.entity';
 export { Sale } from './sale.entity';
 export { SalesReportImport } from './sales-report-import.entity';
+export { SalesCommission } from './sales-commission.entity';
 export { User } from './user.entity';

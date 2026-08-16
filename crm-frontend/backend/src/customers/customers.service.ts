@@ -201,12 +201,30 @@ export class CustomersService {
     return customers.map(customer => ({ ...this.sanitizeCustomer(customer), ...(statistics.get(customer.id) || { totalSale: 0, invoiceCount: 0, lastPurchase: null }) }));
   }
 
-  getFreeCustomers() {
-    return this.customers
+  async getFreeCustomers() {
+    const customers = await this.customers
       .createQueryBuilder('customer')
       .where('customer.salespersonId IS NULL')
+      .andWhere('customer.status = :free', { free: 'FREE' })
       .orderBy('customer.id', 'DESC')
       .getMany();
+    const invoices = customers.length ? await this.dataSource.getRepository(Invoice).find({
+      where: { customerId: In(customers.map(customer => customer.id)) },
+      order: { invoiceDate: 'DESC', createdAt: 'DESC' },
+    }) : [];
+    const statistics = new Map<number, { totalSale: number; invoiceCount: number; lastPurchase: Date | null }>();
+    for (const invoice of invoices.filter(item => item.status !== 'CANCELLED')) {
+      const current = statistics.get(invoice.customerId) || { totalSale: 0, invoiceCount: 0, lastPurchase: null };
+      current.totalSale += Number(invoice.total || 0);
+      current.invoiceCount += 1;
+      const purchaseDate = invoice.invoiceDate || invoice.createdAt;
+      if (!current.lastPurchase || purchaseDate > current.lastPurchase) current.lastPurchase = purchaseDate;
+      statistics.set(invoice.customerId, current);
+    }
+    return customers.map(customer => ({
+      ...this.sanitizeCustomer(customer),
+      ...(statistics.get(customer.id) || { totalSale: 0, invoiceCount: 0, lastPurchase: null }),
+    }));
   }
 
   getMyCustomers(userId: number) {
@@ -216,14 +234,18 @@ export class CustomersService {
   claim(customerId: number, userId: number) {
     return this.dataSource.transaction(async manager => {
       await this.requireSalesUser(userId, manager);
-      const result = await manager.getRepository(Customer).createQueryBuilder()
-        .update(Customer)
-        .set({ salespersonId: userId, status: 'ASSIGNED' })
-        .where('id = :customerId AND "salespersonId" IS NULL', { customerId })
-        .execute();
-      if (!result.affected) throw new BadRequestException('Customer is no longer available');
+      const repository = manager.getRepository(Customer);
+      const customer = await repository.findOne({
+        where: { id: customerId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!customer) throw new NotFoundException('Customer not found');
+      if (customer.salespersonId !== null) throw new BadRequestException('Customer is already assigned to another salesperson');
+      customer.salespersonId = userId;
+      customer.status = 'ASSIGNED';
+      await repository.save(customer);
       await this.addHistory(manager, customerId, userId, 'CLAIM', 'Customer claimed by salesperson');
-      return manager.getRepository(Customer).findOne({ where: { id: customerId }, relations: { assignedTo: true } });
+      return repository.findOne({ where: { id: customerId }, relations: { assignedTo: true } });
     });
   }
 
@@ -278,9 +300,13 @@ export class CustomersService {
       if (data.phone !== undefined) await this.ensurePhoneAvailable(data.phone, id, manager);
       const editableFields = [
         'name', 'storeName', 'phone', 'province', 'city', 'address', 'nationalCode', 'description',
-        'status', 'customerType', 'initialScore', 'healthScore',
+        'customerType', 'initialScore', 'healthScore',
       ] as const;
       const changedFields: string[] = [];
+      if (user.role === 'ADMIN' && data.status !== undefined) {
+        customer.status = data.status;
+        changedFields.push('status');
+      }
 
       for (const field of editableFields) {
         if (data[field] !== undefined) {
@@ -368,6 +394,18 @@ export class CustomersService {
       ...item,
       user: item.user ? { id: item.user.id, name: item.user.name, role: item.user.role } : null,
     }));
+  }
+
+  async addNote(customerId: number, data: any, user: AuthenticatedUser) {
+    const customer = await this.customers.findOneBy(this.accessibleWhere(customerId, user));
+    if (!customer) throw new NotFoundException('Customer not found');
+    const description = String(data.description ?? data.note ?? '').trim();
+    if (!description) throw new BadRequestException('note is required');
+    const action = ['NOTE', 'COMMENT', 'FEEDBACK'].includes(String(data.action).toUpperCase())
+      ? String(data.action).toUpperCase()
+      : 'NOTE';
+    const saved = await this.histories.save({ customerId, userId: user.id, action, description });
+    return this.histories.findOne({ where: { id: saved.id }, relations: { user: true } });
   }
 
   async getCustomerStatistics() {

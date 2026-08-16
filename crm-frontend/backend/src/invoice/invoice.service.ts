@@ -73,7 +73,7 @@ export class InvoiceService {
   update(id: number, data: any, actor: AuthenticatedUser) {
     return this.dataSource.transaction(async manager => {
       const repository = manager.getRepository(Invoice);
-      const invoice = await repository.findOne({ where: actor.role === 'ADMIN' ? { id } : { id, userId: actor.id }, relations: { customer: true, user: true } });
+      const invoice = await repository.findOne({ where: this.accessibleWhere(id, actor), relations: { customer: true, user: true } });
       if (!invoice) throw new NotFoundException('Invoice not found');
       if (data.customerId !== undefined) {
         const customerId = this.requiredId(data.customerId, 'customerId');
@@ -102,7 +102,7 @@ export class InvoiceService {
   }
 
   async remove(id: number, actor: AuthenticatedUser) {
-    const invoice = await this.invoices.findOneBy(actor.role === 'ADMIN' ? { id } : { id, userId: actor.id });
+    const invoice = await this.invoices.findOne({ where: this.accessibleWhere(id, actor), relations: { customer: true } });
     if (!invoice) throw new NotFoundException('Invoice not found');
     if (invoice.status === 'PAID') throw new BadRequestException('Paid invoice cannot be deleted');
     await this.invoices.remove(invoice); return { deleted: true, id };
@@ -112,7 +112,7 @@ export class InvoiceService {
     return this.dataSource.transaction(async (manager) => {
       const status = this.validStatus(statusValue);
       const repository = manager.getRepository(Invoice);
-      const invoice = await repository.findOneBy(actor.role === 'ADMIN' ? { id } : { id, userId: actor.id });
+      const invoice = await repository.findOne({ where: this.accessibleWhere(id, actor), relations: { customer: true } });
       if (!invoice) throw new NotFoundException('Invoice not found');
       invoice.status = status;
       await repository.save(invoice);
@@ -125,6 +125,10 @@ export class InvoiceService {
       throw new BadRequestException(`status must be one of: ${INVOICE_STATUSES.join(', ')}`);
     }
     return value;
+  }
+
+  private accessibleWhere(id: number, actor: AuthenticatedUser) {
+    return actor.role === 'ADMIN' ? { id } : { id, customer: { salespersonId: actor.id } };
   }
 
   private validItems(value: unknown) {

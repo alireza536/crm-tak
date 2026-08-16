@@ -18,8 +18,8 @@ export class SalesService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async getReportSummary(actor: AuthenticatedUser, startDate?: string, endDate?: string) {
-    const sales = await this.reportInvoices(actor, startDate, endDate);
+  async getReportSummary(actor: AuthenticatedUser, startDate?: string, endDate?: string, salespersonId?: string, customerId?: string, product?: string) {
+    const sales = await this.reportInvoices(actor, startDate, endDate, salespersonId, customerId, product);
     return {
       totalSalesAmount: sales.reduce((sum, sale) => sum + Number(sale.amount || 0), 0),
       totalInvoices: sales.length,
@@ -28,8 +28,8 @@ export class SalesService {
     };
   }
 
-  async getReportCharts(actor: AuthenticatedUser, startDate?: string, endDate?: string) {
-    const sales = await this.reportInvoices(actor, startDate, endDate);
+  async getReportCharts(actor: AuthenticatedUser, startDate?: string, endDate?: string, salespersonId?: string, customerId?: string, product?: string) {
+    const sales = await this.reportInvoices(actor, startDate, endDate, salespersonId, customerId, product);
     const group = (keyOf: (date: Date) => string, labelOf: (date: Date) => string) => {
       const map = new Map<string, { key: string; label: string; revenue: number; invoices: number }>();
       sales.forEach(sale => {
@@ -76,13 +76,16 @@ export class SalesService {
     return query.getMany();
   }
 
-  private async reportInvoices(actor: AuthenticatedUser, startDate?: string, endDate?: string) {
+  private async reportInvoices(actor: AuthenticatedUser, startDate?: string, endDate?: string, salespersonId?: string, customerId?: string, product?: string) {
     const query = this.dataSource.getRepository(Invoice).createQueryBuilder('invoice')
       .leftJoinAndSelect('invoice.customer', 'customer')
       .leftJoinAndSelect('customer.assignedTo', 'salesperson')
       .where('invoice.status != :cancelled', { cancelled: 'CANCELLED' })
       .orderBy('COALESCE(invoice.invoiceDate, invoice.createdAt)', 'ASC');
     if (actor.role !== 'ADMIN') query.andWhere('customer.salespersonId = :userId', { userId: actor.id });
+    if (actor.role === 'ADMIN' && salespersonId) query.andWhere('customer.salespersonId = :salespersonId', { salespersonId: Number(salespersonId) });
+    if (customerId) query.andWhere('customer.id = :customerId', { customerId: Number(customerId) });
+    if (product?.trim()) query.andWhere('CAST(invoice.items AS text) ILIKE :product', { product: `%${product.trim()}%` });
     if (startDate) {
       const start = new Date(startDate + (startDate.includes('T') ? '' : 'T00:00:00'));
       if (Number.isNaN(start.getTime())) throw new BadRequestException('startDate is invalid');

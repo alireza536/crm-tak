@@ -4,10 +4,9 @@ import * as soap from 'soap';
 @Injectable()
 export class SmsService {
 
-  private username = '989156440664';
-private password =
-'be96be9a-6b76-4ba8-bea4-037ccbf911bd';
-  private bodyId = 485147;
+  private username = process.env.SMS_USERNAME || '';
+  private password = process.env.SMS_PASSWORD || '';
+  private bodyId = Number(process.env.SMS_BODY_ID || 0);
 
   private wsdl =
     'https://api.payamak-panel.com/post/send.asmx?WSDL';
@@ -23,6 +22,10 @@ private password =
     discount: string,
 
   ) {
+
+    if (!this.username || !this.password || !this.bodyId) {
+      throw new Error('SMS_USERNAME, SMS_PASSWORD and SMS_BODY_ID are required');
+    }
 
     const cleanPhone = phone
       .split('-')[0]

@@ -5,16 +5,17 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../auth/roles.decorator';
 import { SalesService } from './sales.service';
+import { excelUploadOptions } from '../uploads/excel-upload-options';
 
 @Controller('reports')
 @UseGuards(JwtAuthGuard, RoleGuard)
-@Roles('ADMIN', 'SALES')
+@Roles('ADMIN')
 export class SalesReportController {
   constructor(private readonly salesService: SalesService) {}
 
   @Post('preview')
   @Roles('ADMIN')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', excelUploadOptions))
   preview(
     @UploadedFile() file: Express.Multer.File,
     @Body('reportType') reportType: string,
@@ -44,12 +45,12 @@ export class SalesReportController {
   }
 
   @Get('summary')
-  summary(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
-    return this.salesService.getReportSummary(req.user, startDate, endDate);
+  summary(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string, @Query('salespersonId') salespersonId?: string, @Query('customerId') customerId?: string, @Query('product') product?: string) {
+    return this.salesService.getReportSummary(req.user, startDate, endDate, salespersonId, customerId, product);
   }
 
   @Get('chart')
-  chart(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
-    return this.salesService.getReportCharts(req.user, startDate, endDate);
+  chart(@Req() req: any, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string, @Query('salespersonId') salespersonId?: string, @Query('customerId') customerId?: string, @Query('product') product?: string) {
+    return this.salesService.getReportCharts(req.user, startDate, endDate, salespersonId, customerId, product);
   }
 }

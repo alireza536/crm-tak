@@ -4,6 +4,7 @@ import { User } from './user.entity';
 
 export type FollowUpType = 'CALL'|'WHATSAPP'|'MEETING'|'QUOTE'|'PAYMENT'|'OTHER';
 export type FollowUpStatus = 'PENDING'|'DONE'|'CANCELLED'|'OVERDUE';
+export type FollowUpPriority = 'LOW'|'MEDIUM'|'HIGH';
 
 @Entity('FollowUp')
 export class FollowUp {
@@ -16,6 +17,7 @@ export class FollowUp {
   @Column({ type: 'text', default: 'Customer follow-up' }) title: string;
   @Column({ type: 'text', nullable: true }) description: string | null;
   @Column({ type: 'text', default: 'PENDING' }) status: FollowUpStatus;
+  @Column({ type: 'text', default: 'MEDIUM' }) priority: FollowUpPriority;
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }) dueDate: Date;
   @Column({ type: 'timestamp', nullable: true }) completedAt: Date | null;
   @CreateDateColumn() createdAt: Date;

@@ -4,10 +4,11 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../auth/roles.decorator';
 import { SalesService } from './sales.service';
+import { excelUploadOptions } from '../uploads/excel-upload-options';
 
 @Controller('sales')
 @UseGuards(JwtAuthGuard, RoleGuard)
-@Roles('ADMIN', 'SALES')
+@Roles('ADMIN')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
@@ -18,7 +19,7 @@ export class SalesController {
 
   @Post('reports/preview')
   @Roles('ADMIN')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', excelUploadOptions))
   previewReport(
     @UploadedFile() file: Express.Multer.File,
     @Body('reportType') reportType: string,
