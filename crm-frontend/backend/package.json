@@ -7,8 +7,15 @@
   "scripts": {
     "build": "tsc",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
-    "start": "ts-node src/main.ts",
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d src/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts",
+    "migration:validate": "npm run build && node ../deploy/validate-migrations.cjs",
+    "migration:validate-existing": "npm run build && node ../deploy/validate-existing-migrations.cjs",
+    "admin:create": "node dist/create-production-admin.js",
+    "start": "node dist/main.js",
+    "start:prod": "node dist/main.js",
     "start:dev": "ts-node --transpile-only src/main.ts",
+    "start:local": "ts-node src/main.ts",
     "seed:users": "ts-node src/seed-users.ts",
     "seed:customers": "ts-node src/seed-customers.ts",
     "test:sales-import": "ts-node src/validate-sales-import-files.ts"
@@ -24,14 +31,12 @@
     "axios": "^1.18.1",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
-    "melipayamak": "^1.0.5",
     "multer": "^1.4.5-lts.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "soap": "^1.9.3",
     "typeorm": "^0.3.26",
     "xlsx": "^0.18.5"
   },
@@ -41,6 +46,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^25.9.1",
     "@types/passport": "^1.0.17",
+    "soap": "^1.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   }
