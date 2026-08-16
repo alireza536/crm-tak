@@ -14,10 +14,7 @@
     "skipLibCheck": true,
     "strict": false,
     "strictPropertyInitialization": false,
-    "types": [
-      "node",
-      "multer"
-    ]
+    
   },
   "include": [
     "src/**/*.ts"
