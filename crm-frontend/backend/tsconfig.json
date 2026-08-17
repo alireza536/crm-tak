@@ -13,8 +13,7 @@
     "incremental": true,
     "skipLibCheck": true,
     "strict": false,
-    "strictPropertyInitialization": false,
-    
+    "strictPropertyInitialization": false
   },
   "include": [
     "src/**/*.ts"
