@@ -8,7 +8,7 @@ import { excelUploadOptions } from '../uploads/excel-upload-options';
 
 @Controller('sales')
 @UseGuards(JwtAuthGuard, RoleGuard)
-@Roles('ADMIN')
+@Roles('ADMIN', 'SALES')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 

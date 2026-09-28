@@ -2,7 +2,7 @@ import axios from "axios";
 import { clearSession, getAccessToken, getCurrentUser, type AuthUser } from "../utils/auth";
 
 const API_URL = import.meta.env.VITE_API_URL
-  || (import.meta.env.PROD ? "https://crm-tak.onrender.com" : "http://localhost:3001");
+  || (import.meta.env.PROD ? "/api" : "http://localhost:3001");
 
 const api = axios.create({ baseURL: API_URL, timeout: 120000 });
 
@@ -33,8 +33,13 @@ export type LoginResponse = {
 };
 
 export async function login(phone: string, password: string) {
-  const response = await api.post<LoginResponse>("/auth/login", { phone, password });
+  // Render free services may need more than two minutes for their first cold start.
+  const response = await api.post<LoginResponse>("/auth/login", { phone, password }, { timeout: 180000 });
   return response.data;
+}
+
+export async function warmUpServer() {
+  return (await api.get<{ status: string }>("/health", { timeout: 180000 })).data;
 }
 
 export async function getRoleDashboard() {
@@ -137,11 +142,19 @@ export async function importCustomers(payload: { fileName: string; rows: Custome
 }
 
 export async function getFreeCustomers() {
-  return (await api.get<Array<{id:number;name:string;phone:string|null;city:string|null;address:string|null;nationalCode:string|null;createdAt:string}>>("/customers/free")).data;
+  return (await api.get<Array<{id:number;name:string;storeName:string|null;phone:string|null;province:string|null;city:string|null;address:string|null;nationalCode:string|null;customerType:string;status:string;totalSale:number;invoiceCount:number;lastPurchase:string|null;createdAt:string}>>("/customers/free")).data;
 }
 
 export async function claimCustomer(id: number) {
   return (await api.patch(`/customers/${id}/claim`)).data;
+}
+
+export async function assignCustomer(id: number, userId: number) {
+  return (await api.patch(`/customers/${id}/assign`, { userId })).data;
+}
+
+export async function releaseCustomer(id: number) {
+  return (await api.patch(`/customers/${id}/release`)).data;
 }
 
 export async function getSalesUsers() {
@@ -151,6 +164,36 @@ export async function getSalesUsers() {
 
 export async function getCustomerProfile(id: number) {
   return (await api.get(`/customers/${id}`)).data;
+}
+export async function setCustomerSmsConsent(id: number, optIn: boolean) {
+  return (await api.patch(`/customers/${id}/sms-consent`, { optIn })).data;
+}
+
+export type SalesPerformanceRecord={userId:number;name:string;customerCount:number;invoiceCount:number;totalSales:number;averageInvoice:number;lastActivity:string|null;completedFollowUps:number;pendingFollowUps:number;commissionPercentage:number;totalCommissionEarned:number;paidCommission:number;remainingCommission:number};
+export async function getSalesPerformance(){return(await api.get<SalesPerformanceRecord[]>("/sales-performance")).data}
+
+export type IntelligenceCustomer={id:number;name:string;phone:string|null;city:string|null;province:string|null;status:string;totalPurchase:number;purchaseCount:number;lastPurchase:string|null;salespersonId:number|null};
+export async function filterIntelligenceCustomers(filters:Record<string,string|number|undefined>={}){return(await api.get<{customers:IntelligenceCustomer[];count:number;limit:number;offset:number;summary:{totalPurchaseValue:number;averageCustomerValue:number}}>('/intelligence/customers',{params:filters})).data}
+export async function getCustomerInsight(id:number){return(await api.get(`/intelligence/customers/${id}/insights`)).data}
+export async function getChurnRisk(filters:Record<string,string|number|undefined>={}){return(await api.get<{customers:Array<IntelligenceCustomer&{averagePurchaseIntervalDays:number|null;daysSinceLastPurchase:number;reason:string}>;count:number;rule:string}>('/intelligence/churn',{params:filters})).data}
+export async function getIntelligenceRecommendations(){return(await api.get<Array<{city:string;product:string;count:number;reason:string}>>('/intelligence/recommendations')).data}
+export async function getMarketingDashboard(){return(await api.get('/intelligence/dashboard')).data}
+export async function getMarketingCampaigns(){return(await api.get<Array<{id:number;name:string;message:string;filters:Record<string,string>;status:string;recipientCount:number;sentCount:number;failedCount:number;skippedCount:number;scheduledAt:string|null;sentAt:string|null;createdAt:string}>>('/marketing/campaigns')).data}
+export async function getSmsDeliveryStatus(){return(await api.get<{provider:string;configured:boolean}>('/marketing/delivery-status')).data}
+export async function createMarketingCampaign(payload:{name:string;message:string;filters:Record<string,string>;scheduledAt?:string}){return(await api.post('/marketing/campaigns',payload)).data}
+export async function previewMarketingCampaign(id:number){return(await api.post<{campaign:{id:number;name:string};count:number;sample:IntelligenceCustomer[]}>(`/marketing/campaigns/${id}/preview`)).data}
+export async function sendMarketingCampaign(id:number,expectedRecipientCount:number){return(await api.post(`/marketing/campaigns/${id}/send`,{confirm:true,expectedRecipientCount})).data}
+export async function getMarketingCampaignRecipients(id:number){return(await api.get<Array<{id:number;customerId:number;phone:string;status:string;providerMessageId:string|null;error:string|null;createdAt:string;sentAt:string|null}>>(`/marketing/campaigns/${id}/recipients`)).data}
+export async function getMarketingTemplates(){return(await api.get<Array<{id:number;name:string;message:string}>>('/marketing/templates')).data}
+export async function createMarketingTemplate(payload:{name:string;message:string}){return(await api.post('/marketing/templates',payload)).data}
+export async function getAutomationRules(){return(await api.get<Array<{id:number;name:string;type:string;enabled:boolean;delayDays:number;cooldownDays:number;message:string}>>('/marketing/automations')).data}
+export async function saveAutomationRule(payload:{name:string;type:'REENGAGEMENT'|'BIRTHDAY';enabled:boolean;delayDays:number;cooldownDays:number;message:string}){return(await api.post('/marketing/automations',payload)).data}
+export async function updateAutomationRule(id:number,payload:Partial<{enabled:boolean;delayDays:number;cooldownDays:number;message:string}>){return(await api.patch(`/marketing/automations/${id}`,payload)).data}
+export async function runAutomationRule(id:number){return(await api.post(`/marketing/automations/${id}/run`)).data}
+export async function updateSalesCommission(userId:number,payload:{percentage:number;paidAmount:number}){return(await api.patch(`/sales-performance/${userId}/commission`,payload)).data}
+
+export async function addCustomerNote(id:number,payload:{description:string;action?:"NOTE"|"COMMENT"|"FEEDBACK"}) {
+  return (await api.post(`/customers/${id}/notes`,payload)).data;
 }
 
 export async function getSales() {
@@ -172,11 +215,12 @@ export async function convertQuotationToInvoice(id:number){return(await api.post
 
 export type FollowUpType="CALL"|"WHATSAPP"|"MEETING"|"QUOTE"|"PAYMENT"|"OTHER";
 export type FollowUpStatus="PENDING"|"DONE"|"CANCELLED"|"OVERDUE";
-export type FollowUpRecord={id:number;customerId:number;userId:number;type:FollowUpType;title:string;description:string|null;status:FollowUpStatus;dueDate:string;completedAt:string|null;createdAt:string;customer:{id:number;name:string;phone:string};user:{id:number;name:string}};
+export type FollowUpPriority="LOW"|"MEDIUM"|"HIGH";
+export type FollowUpRecord={id:number;customerId:number;userId:number;type:FollowUpType;title:string;description:string|null;status:FollowUpStatus;priority:FollowUpPriority;dueDate:string;completedAt:string|null;createdAt:string;customer:{id:number;name:string;phone:string};user:{id:number;name:string}};
 export async function getFollowUps(){return(await api.get<FollowUpRecord[]>("/followups")).data}
 export async function getCustomerFollowUps(customerId:number){return(await api.get<FollowUpRecord[]>(`/followups/customer/${customerId}`)).data}
-export async function createFollowUp(payload:{customerId:number;userId?:number;type:FollowUpType;title:string;description?:string;dueDate:string;status?:FollowUpStatus}){return(await api.post<FollowUpRecord>("/followups",payload)).data}
-export async function updateFollowUp(id:number,payload:Partial<Pick<FollowUpRecord,"type"|"title"|"description"|"status"|"dueDate">>){return(await api.patch<FollowUpRecord>(`/followups/${id}`,payload)).data}
+export async function createFollowUp(payload:{customerId:number;userId?:number;type:FollowUpType;title:string;description?:string;dueDate:string;status?:FollowUpStatus;priority?:FollowUpPriority}){return(await api.post<FollowUpRecord>("/followups",payload)).data}
+export async function updateFollowUp(id:number,payload:Partial<Pick<FollowUpRecord,"type"|"title"|"description"|"status"|"priority"|"dueDate">>){return(await api.patch<FollowUpRecord>(`/followups/${id}`,payload)).data}
 export async function deleteFollowUp(id:number){return(await api.delete(`/followups/${id}`)).data}
 
 export async function createSale(payload: {
@@ -259,23 +303,24 @@ export async function downloadSalesImportSample() {
   URL.revokeObjectURL(url);
 }
 
-const reportParams = (startDate?: string, endDate?: string) => ({
-  params: { ...(startDate ? { startDate } : {}), ...(endDate ? { endDate } : {}) },
+export type ReportFilters={salespersonId?:string;customerId?:string;product?:string};
+const reportParams = (startDate?: string, endDate?: string,filters:ReportFilters={}) => ({
+  params: { ...(startDate ? { startDate } : {}), ...(endDate ? { endDate } : {}), ...filters },
 });
 
-export async function getReportSummary(startDate?: string, endDate?: string) {
+export async function getReportSummary(startDate?: string, endDate?: string,filters?:ReportFilters) {
   return (await api.get<{
     totalSalesAmount: number; totalInvoices: number; totalCustomers: number; totalProducts: number;
-  }>("/reports/summary", reportParams(startDate, endDate))).data;
+  }>("/reports/summary", reportParams(startDate, endDate,filters))).data;
 }
 
-export async function getReportCharts(startDate?: string, endDate?: string) {
+export async function getReportCharts(startDate?: string, endDate?: string,filters?:ReportFilters) {
   type Point={key:string;label:string;revenue:number;invoices:number};
   return (await api.get<{
     dailySales: Point[]; monthlySales: Point[]; yearlySales: Point[];
     salespersonPerformance: Array<{userId:number;name:string;revenue:number;sales:number}>;
     customerRanking: Array<{customerId:number;name:string;revenue:number;sales:number}>;
-  }>("/reports/chart", reportParams(startDate, endDate))).data;
+  }>("/reports/chart", reportParams(startDate, endDate,filters))).data;
 }
 
 export function userFromLogin(data: LoginResponse): AuthUser {

@@ -18,11 +18,12 @@ export default function CustomerInvoices({ customerId }: { customerId: number })
   return <GlassCard className="customerQuotationPanel">
     <header><ReceiptText/><div><small>SALES INVOICES</small><h2>فاکتورهای فروش</h2></div></header>
     {rows.length ? <DataTable>
-      <thead><tr><th>شماره فاکتور</th><th>تاریخ</th><th>شرح خرید</th><th>مبلغ</th><th>وضعیت پرداخت</th></tr></thead>
+      <thead><tr><th>شماره فاکتور</th><th>تاریخ</th><th>محصولات</th><th>تعداد</th><th>مبلغ</th><th>وضعیت پرداخت</th></tr></thead>
       <tbody>{rows.map(row => <tr key={row.id}>
         <td>{row.invoiceNumber}</td>
         <td>{new Date(row.invoiceDate || row.createdAt).toLocaleDateString("fa-IR")}</td>
         <td>{row.items?.map(item => `${item.productName} × ${item.quantity}`).join("، ") || "—"}</td>
+        <td>{row.items?.reduce((sum,item)=>sum+Number(item.quantity||0),0).toLocaleString("fa-IR")||"—"}</td>
         <td>{row.total.toLocaleString("fa-IR")} ریال</td>
         <td><Badge tone={tones[row.status]}>{labels[row.status]}</Badge></td>
       </tr>)}</tbody>

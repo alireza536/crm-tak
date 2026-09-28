@@ -73,6 +73,11 @@ export class CustomersController {
     return this.customersService.addNote(Number(id), body, req.user);
   }
 
+  @Patch(':id/sms-consent')
+  setSmsConsent(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+    return this.customersService.setSmsConsent(Number(id), body?.optIn, req.user);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @Req() req: any) {
     return this.customersService.findOne(Number(id), req.user);

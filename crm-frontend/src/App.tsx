@@ -7,6 +7,7 @@ import Customers from "./pages/Customers";
 import CustomerProfile from "./pages/CustomerProfile";
 import CustomerUpload from "./pages/CustomerUpload";
 import FreeCustomers from "./pages/FreeCustomers";
+import MyCustomers from "./pages/MyCustomers";
 import Dashboard from "./pages/Dashboard";
 import FollowUpCenter from "./pages/FollowUpCenter";
 import Invoices from "./pages/Invoices";
@@ -42,28 +43,29 @@ function Layout() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/customers" element={<Customers />} />
+            <Route path="/customers/my" element={<ProtectedRoute roles={["SALES"]}><MyCustomers /></ProtectedRoute>} />
             <Route path="/customers/free" element={<FreeCustomers />} />
             <Route path="/customers/upload" element={<ProtectedRoute roles={["ADMIN"]}><CustomerUpload /></ProtectedRoute>} />
             <Route path="/customer/:id" element={<CustomerProfile />} />
             <Route path="/customer-upload" element={<Navigate to="/customers/upload" replace />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/quotations" element={<ProtectedRoute roles={["ADMIN","SALES"]}><Quotations /></ProtectedRoute>} />
+            <Route path="/sales" element={<ProtectedRoute roles={["ADMIN"]}><Sales /></ProtectedRoute>} />
+            <Route path="/quotations" element={<ProtectedRoute roles={["ADMIN"]}><Quotations /></ProtectedRoute>} />
             <Route path="/invoices" element={<ProtectedRoute roles={["ADMIN","SALES"]}><Invoices /></ProtectedRoute>} />
             <Route path="/payments" element={<ProtectedRoute roles={["ADMIN","SALES"]}><Payments /></ProtectedRoute>} />
-            <Route path="/financial-reports" element={<ProtectedRoute roles={["ADMIN","SALES"]}><FinancialReports /></ProtectedRoute>} />
+            <Route path="/financial-reports" element={<ProtectedRoute roles={["ADMIN"]}><FinancialReports /></ProtectedRoute>} />
             <Route path="/follow-ups" element={<ProtectedRoute roles={["ADMIN","SALES"]}><FollowUpCenter /></ProtectedRoute>} />
             <Route path="/follow-up" element={<Navigate to="/follow-ups" replace />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/agents" element={<ProtectedRoute roles={["ADMIN"]}><SalesAgents /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute roles={["ADMIN"]}><Settings /></ProtectedRoute>} />
+            <Route path="/agents" element={<ProtectedRoute roles={["ADMIN","SALES"]}><SalesAgents /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute roles={["ADMIN"]}><UserManagement /></ProtectedRoute>} />
-            <Route path="/insights" element={<SalesIntelligence />} />
-            <Route path="/ai-assistant" element={<AISalesAssistant />} />
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/reports" element={<ProtectedRoute roles={["ADMIN", "SALES"]}><ReportsCenter /></ProtectedRoute>} />
+            <Route path="/insights" element={<ProtectedRoute roles={["ADMIN"]}><SalesIntelligence /></ProtectedRoute>} />
+            <Route path="/ai-assistant" element={<ProtectedRoute roles={["ADMIN"]}><AISalesAssistant /></ProtectedRoute>} />
+            <Route path="/campaigns" element={<ProtectedRoute roles={["ADMIN"]}><Campaigns /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute roles={["ADMIN"]}><ReportsCenter /></ProtectedRoute>} />
             <Route path="/reports/upload" element={<ProtectedRoute roles={["ADMIN"]}><UploadSales /></ProtectedRoute>} />
-            <Route path="/tasks" element={<TaskPlanner />} />
-            <Route path="/pipeline" element={<SalesPipeline />} />
-            <Route path="/pipeline/:id" element={<OpportunityDetails />} />
+            <Route path="/tasks" element={<ProtectedRoute roles={["ADMIN"]}><TaskPlanner /></ProtectedRoute>} />
+            <Route path="/pipeline" element={<ProtectedRoute roles={["ADMIN"]}><SalesPipeline /></ProtectedRoute>} />
+            <Route path="/pipeline/:id" element={<ProtectedRoute roles={["ADMIN"]}><OpportunityDetails /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute roles={["ADMIN"]}><UploadSales /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

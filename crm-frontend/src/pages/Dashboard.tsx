@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Banknote, CalendarDays, CircleDollarSign, CreditCard, ReceiptText, RefreshCw, TrendingUp, UsersRound, WalletCards } from "lucide-react";
+import { AlertTriangle, Award, Banknote, CalendarDays, CheckCircle2, CircleDollarSign, CreditCard, Percent, ReceiptText, RefreshCw, TrendingUp, UserRoundCheck, UserRoundPlus, UsersRound } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   getCustomers,
@@ -24,6 +24,17 @@ type Customer = { id: number; name: string; assignedToId?: number | null; assign
 type Sale = { id: number; amount: number | string; createdAt: string; userId?: number; user?: { id: number }; salesperson?: { id: number } };
 type ReportPoint = { key: string; label: string; revenue: number; invoices: number };
 type ReportCharts = { dailySales: ReportPoint[]; monthlySales: ReportPoint[]; yearlySales: ReportPoint[] };
+type DashboardData = {
+  summary?: {
+    totalCustomers?: number; freeCustomers?: number; assignedCustomers?: number;
+    totalSales?: number; totalInvoices?: number; totalPayments?: number; totalRevenue?: number;
+    personalSales?: number; personalInvoices?: number; personalPayments?: number;
+    personalRevenue?: number; receivedPayments?: number; convertedCustomers?: number; conversionRate?: number;
+    todayFollowUps?: number; overdueFollowUps?: number; completedFollowUps?: number;
+    bestSalesperson?: string|null;
+  };
+  salesPerformance?: Array<{ userId: number; name: string; salesCount: number; revenue: number }>;
+};
 
 const number = (value: unknown) => Number(value || 0);
 const fa = (value: unknown) => number(value).toLocaleString("fa-IR");
@@ -40,24 +51,36 @@ export default function Dashboard() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [dashboard, setDashboard] = useState<unknown>(null);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [welcomeState, setWelcomeState] = useState<"visible" | "leaving" | "hidden">(() =>
+    window.sessionStorage.getItem("tak-dashboard-welcome-seen") ? "hidden" : "visible",
+  );
+
+  useEffect(() => {
+    if (welcomeState === "hidden") return;
+    window.sessionStorage.setItem("tak-dashboard-welcome-seen", "1");
+    const leaveTimer = window.setTimeout(() => setWelcomeState("leaving"), 5000);
+    const hideTimer = window.setTimeout(() => setWelcomeState("hidden"), 5600);
+    return () => { window.clearTimeout(leaveTimer); window.clearTimeout(hideTimer); };
+  }, []);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
+      let failedRequests = 0;
       const [dashboardData, financeData, financeChartData, reportChartData, customerData, salesData, invoiceData, paymentData] = await Promise.all([
-        getRoleDashboard(),
-        getFinancialSummary(),
-        getFinancialChart(),
-        getReportCharts(),
-        getCustomers(),
-        getSales(),
-        getInvoices(),
-        getPayments(),
+        getRoleDashboard().catch(() => { failedRequests++; return null; }),
+        (isAdmin ? getFinancialSummary() : Promise.resolve(null)).catch(() => { failedRequests++; return null; }),
+        (isAdmin ? getFinancialChart() : Promise.resolve([])).catch(() => { failedRequests++; return []; }),
+        (isAdmin ? getReportCharts() : Promise.resolve(null)).catch(() => { failedRequests++; return null; }),
+        getCustomers().catch(() => { failedRequests++; return []; }),
+        (isAdmin ? getSales() : Promise.resolve([])).catch(() => { failedRequests++; return []; }),
+        getInvoices().catch(() => { failedRequests++; return []; }),
+        getPayments().catch(() => { failedRequests++; return []; }),
       ]);
       if (import.meta.env.DEV && user?.role === "SALES") {
         console.groupCollapsed("[TAK CRM] SALES dashboard API responses");
@@ -72,7 +95,7 @@ export default function Dashboard() {
         console.log("customers response", customerData);
         console.groupEnd();
       }
-      setDashboard(dashboardData);
+      setDashboard(dashboardData as DashboardData | null);
       setFinancial(financeData);
       setFinancialChart(Array.isArray(financeChartData) ? financeChartData : []);
       setReportCharts(reportChartData);
@@ -81,6 +104,9 @@ export default function Dashboard() {
       setInvoices(Array.isArray(invoiceData) ? invoiceData : []);
       setPayments(Array.isArray(paymentData) ? paymentData : []);
       setUpdatedAt(new Date());
+      if (failedRequests > 0) {
+        setError(`بخشی از اطلاعات داشبورد دریافت نشد (${failedRequests} سرویس).`);
+      }
     } catch (reason) {
       console.error(reason);
       const message = "دریافت اطلاعات واقعی داشبورد ناموفق بود.";
@@ -89,7 +115,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [user?.role]);
+  }, [isAdmin, user?.role]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -97,34 +123,31 @@ export default function Dashboard() {
     const ownerIds = [item.userId, item.user?.id, item.salesperson?.id].filter((id): id is number => typeof id === "number");
     return ownerIds.length === 0 || ownerIds.includes(Number(user?.id));
   }), [isAdmin, sales, user?.id]);
-  const ownCustomers = useMemo(() => isAdmin ? customers : customers.filter(item => {
-    const ownerId = item.assignedToId ?? item.assignedTo?.id;
-    return ownerId == null || Number(ownerId) === Number(user?.id);
-  }), [customers, isAdmin, user?.id]);
-  const ownInvoices = useMemo(() => isAdmin ? invoices : invoices.filter(item => Number(item.userId) === Number(user?.id)), [invoices, isAdmin, user?.id]);
+  const ownCustomers = useMemo(() => customers, [customers]);
+  const ownInvoices = useMemo(() => invoices, [invoices]);
   const ownInvoiceIds = useMemo(() => new Set(ownInvoices.map(item => item.id)), [ownInvoices]);
-  const ownPayments = useMemo(() => isAdmin ? payments : payments.filter(item => Number(item.userId) === Number(user?.id) || ownInvoiceIds.has(item.invoiceId)), [isAdmin, ownInvoiceIds, payments, user?.id]);
+  const ownPayments = useMemo(() => isAdmin ? payments : payments.filter(item => ownInvoiceIds.has(item.invoiceId)), [isAdmin, ownInvoiceIds, payments]);
   const completedPayments = useMemo(() => ownPayments.filter(item => item.status === "COMPLETED"), [ownPayments]);
   const received = completedPayments.reduce((sum, item) => sum + number(item.amount), 0);
   const issuedTotal = ownInvoices.reduce((sum, item) => sum + number(item.total), 0);
   const debt = Math.max(0, issuedTotal - received);
-  const roleSummary = (dashboard as {summary?:{assignedCustomers?:number}} | null)?.summary;
+  const roleSummary = dashboard?.summary;
   const customerCount = isAdmin ? customers.length : ownCustomers.length || number(roleSummary?.assignedCustomers);
   const invoiceCount = isAdmin ? invoices.length || financial?.totalInvoices || 0 : ownInvoices.length;
   const now = new Date();
-  const personalSalesToday = ownSales.filter(item => new Date(item.createdAt).toDateString() === now.toDateString()).reduce((sum, item) => sum + number(item.amount), 0);
-  const personalSalesMonth = ownSales.filter(item => { const date = new Date(item.createdAt); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }).reduce((sum, item) => sum + number(item.amount), 0);
-  const personalSalesYear = ownSales.filter(item => new Date(item.createdAt).getFullYear() === now.getFullYear()).reduce((sum, item) => sum + number(item.amount), 0);
+  const personalSalesToday = ownInvoices.filter(item => new Date(item.invoiceDate || item.createdAt).toDateString() === now.toDateString()).reduce((sum, item) => sum + number(item.total), 0);
+  const personalSalesMonth = ownInvoices.filter(item => { const date = new Date(item.invoiceDate || item.createdAt); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }).reduce((sum, item) => sum + number(item.total), 0);
+  const personalSalesYear = ownInvoices.filter(item => new Date(item.invoiceDate || item.createdAt).getFullYear() === now.getFullYear()).reduce((sum, item) => sum + number(item.total), 0);
   const personalDailyTrend = useMemo(() => {
     const points = new Map<string, {name:string;sales:number;invoices:number}>();
     ownSales.forEach(item => { const date = new Date(item.createdAt); if (Number.isNaN(date.getTime())) return; const key = date.toISOString().slice(0,10); const point = points.get(key) || {name:date.toLocaleDateString("fa-IR",{month:"short",day:"numeric"}),sales:0,invoices:0}; point.sales += number(item.amount); points.set(key,point); });
-    ownInvoices.forEach(item => { const date = new Date(item.createdAt); if (Number.isNaN(date.getTime())) return; const key = date.toISOString().slice(0,10); const point = points.get(key) || {name:date.toLocaleDateString("fa-IR",{month:"short",day:"numeric"}),sales:0,invoices:0}; point.invoices += 1; points.set(key,point); });
+    ownInvoices.forEach(item => { const date = new Date(item.invoiceDate || item.createdAt); if (Number.isNaN(date.getTime())) return; const key = date.toISOString().slice(0,10); const point = points.get(key) || {name:date.toLocaleDateString("fa-IR",{month:"short",day:"numeric"}),sales:0,invoices:0}; point.sales += number(item.total); point.invoices += 1; points.set(key,point); });
     return [...points.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([,point]) => point);
   }, [ownInvoices, ownSales]);
   const personalMonthlyTrend = useMemo(() => {
     const points = new Map<string, {name:string;sales:number;invoices:number}>();
     ownSales.forEach(item => { const date = new Date(item.createdAt); if (Number.isNaN(date.getTime())) return; const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`; const point = points.get(key) || {name:date.toLocaleDateString("fa-IR",{year:"numeric",month:"short"}),sales:0,invoices:0}; point.sales += number(item.amount); points.set(key,point); });
-    ownInvoices.forEach(item => { const date = new Date(item.createdAt); if (Number.isNaN(date.getTime())) return; const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`; const point = points.get(key) || {name:date.toLocaleDateString("fa-IR",{year:"numeric",month:"short"}),sales:0,invoices:0}; point.invoices += 1; points.set(key,point); });
+    ownInvoices.forEach(item => { const date = new Date(item.invoiceDate || item.createdAt); if (Number.isNaN(date.getTime())) return; const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`; const point = points.get(key) || {name:date.toLocaleDateString("fa-IR",{year:"numeric",month:"short"}),sales:0,invoices:0}; point.sales += number(item.total); point.invoices += 1; points.set(key,point); });
     return [...points.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([,point]) => point);
   }, [ownInvoices, ownSales]);
   const financialTrend = financialChart.map(item => ({
@@ -146,6 +169,7 @@ export default function Dashboard() {
     { name: "مطالبات", value: displayedDebt, color: "#f59e0b" },
   ].filter(item => item.value > 0);
   const hasRealData = Boolean(dashboard) && (ownSales.length > 0 || ownInvoices.length > 0 || ownCustomers.length > 0 || (isAdmin && financialChart.length > 0));
+  const salesPerformance = isAdmin ? dashboard?.salesPerformance || [] : [];
 
   useEffect(() => {
     if (!import.meta.env.DEV || isAdmin || loading) return;
@@ -166,7 +190,7 @@ export default function Dashboard() {
 
   return (
     <main className="executiveSaas" dir="rtl">
-      <section className="execHero">
+      <section className={`execHero dashboardWelcome dashboardWelcome--${welcomeState}`} aria-hidden={welcomeState === "hidden"}>
         <div className="heroGlow" />
         <div className="heroCopy">
           <span><TrendingUp size={15} /> LIVE EXECUTIVE DATA</span>
@@ -187,19 +211,35 @@ export default function Dashboard() {
       {error && <div className="execError"><span>{error}</span><button type="button" onClick={() => void load()}>تلاش دوباره</button></div>}
 
       <section className="dashboardKpiGrid">
-        <StatCard tone="cyan" title="فروش امروز" value={money(displayedDailySales)} hint="بر اساس تراکنش‌های امروز" icon={<CircleDollarSign />} loading={loading} />
-        <StatCard tone="purple" title="فروش ماه جاری" value={money(displayedMonthlySales)} hint="جمع فروش ماه جاری" icon={<TrendingUp />} loading={loading} />
-        <StatCard tone="green" title="فروش سال جاری" value={money(displayedYearlySales)} hint="جمع فروش سال جاری" icon={<Banknote />} loading={loading} />
-        <StatCard tone="blue" title="تعداد مشتریان" value={fa(customerCount)} hint="مشتریان قابل مشاهده برای شما" icon={<UsersRound />} loading={loading} />
-        <StatCard tone="orange" title="تعداد فاکتور" value={fa(invoiceCount)} hint="فاکتورهای صادرشده" icon={<ReceiptText />} loading={loading} />
-        <StatCard tone="green" title="مجموع دریافت‌ها" value={money(displayedPaid)} hint="پرداخت‌های تکمیل‌شده" icon={<CreditCard />} loading={loading} />
-        <StatCard tone="orange" title="بدهی مشتریان" value={money(displayedDebt)} hint="مانده فاکتورهای فروش" icon={<WalletCards />} loading={loading} />
+        {isAdmin ? <>
+          <StatCard tone="blue" title="کل مشتریان" value={fa(roleSummary?.totalCustomers ?? customerCount)} hint="تمام مشتریان شرکت" icon={<UsersRound />} loading={loading} />
+          <StatCard tone="orange" title="مشتریان آزاد" value={fa(roleSummary?.freeCustomers)} hint="بدون کارشناس فروش" icon={<UserRoundPlus />} loading={loading} />
+          <StatCard tone="cyan" title="مشتریان تخصیص‌یافته" value={fa(roleSummary?.assignedCustomers)} hint="دارای کارشناس فروش" icon={<UserRoundCheck />} loading={loading} />
+          <StatCard tone="purple" title="کل فروش" value={money(roleSummary?.totalRevenue)} hint="مجموع مبلغ فروش شرکت" icon={<TrendingUp />} loading={loading} />
+          <StatCard tone="orange" title="کل فاکتورها" value={fa(roleSummary?.totalInvoices ?? invoiceCount)} hint="فاکتورهای ثبت‌شده" icon={<ReceiptText />} loading={loading} />
+          <StatCard tone="green" title="کل پرداخت‌ها" value={fa(roleSummary?.totalPayments)} hint="پرداخت‌های تکمیل‌شده" icon={<CreditCard />} loading={loading} />
+        </> : <>
+          <StatCard tone="blue" title="مشتریان من" value={fa(roleSummary?.assignedCustomers ?? customerCount)} hint="مشتریان اختصاص‌یافته به شما" icon={<UsersRound />} loading={loading} />
+          <StatCard tone="orange" title="فاکتورهای من" value={fa(roleSummary?.personalInvoices ?? invoiceCount)} hint="فاکتورهای مشتریان شما" icon={<ReceiptText />} loading={loading} />
+          <StatCard tone="purple" title="مبلغ فروش من" value={money(roleSummary?.personalRevenue ?? personalSalesYear)} hint="مجموع فروش شخصی" icon={<Banknote />} loading={loading} />
+          <StatCard tone="green" title="پرداخت‌های من" value={money(roleSummary?.receivedPayments ?? received)} hint={`${fa(roleSummary?.personalPayments)} پرداخت تکمیل‌شده`} icon={<CreditCard />} loading={loading} />
+          <StatCard tone="cyan" title="نرخ تبدیل من" value={`${fa(roleSummary?.conversionRate)}٪`} hint={`${fa(roleSummary?.convertedCustomers)} مشتری دارای خرید`} icon={<Percent />} loading={loading} />
+        </>}
+        <StatCard tone="cyan" title="پیگیری‌های امروز" value={fa(roleSummary?.todayFollowUps)} hint={isAdmin?"تمام کارشناسان":"مشتریان شما"} icon={<CalendarDays/>} loading={loading}/>
+        <StatCard tone="orange" title="پیگیری‌های عقب‌افتاده" value={fa(roleSummary?.overdueFollowUps)} hint="نیازمند اقدام" icon={<AlertTriangle/>} loading={loading}/>
+        <StatCard tone="green" title="پیگیری‌های انجام‌شده" value={fa(roleSummary?.completedFollowUps)} hint="فعالیت‌های تکمیل‌شده" icon={<CheckCircle2/>} loading={loading}/>
+        <StatCard tone="green" title="فروش امروز" value={money(displayedDailySales)} hint="فروش ثبت‌شده امروز" icon={<CircleDollarSign/>} loading={loading}/>
+        <StatCard tone="purple" title="فروش ماه جاری" value={money(displayedMonthlySales)} hint="فروش این ماه" icon={<TrendingUp/>} loading={loading}/>
+        {isAdmin&&<StatCard tone="cyan" title="برترین کارشناس" value={roleSummary?.bestSalesperson||"—"} hint="بیشترین مبلغ فروش" icon={<Award/>} loading={loading}/>}
       </section>
 
       {loading ? <div className="execLoader"><i /><span>در حال دریافت اطلاعات واقعی داشبورد…</span></div> : !hasRealData ? (
         <GlassCard className="dashboardEmptyCard"><EmptyState title="هنوز داده‌ای برای داشبورد وجود ندارد" description="پس از ثبت فروش، مشتری یا فاکتور، آمار و نمودارها در این بخش نمایش داده می‌شوند." /></GlassCard>
       ) : (
-        <section className="dashboardChartsGrid">
+        <section className={`dashboardChartsGrid${isAdmin ? " dashboardChartsGrid--admin" : ""}`}>
+          {isAdmin && <ChartCard className="dashboardPerformanceChart" title="عملکرد کارشناسان فروش" subtitle="مقایسه مبلغ فروش کارشناسان">
+            <div className="chartBox">{salesPerformance.length ? <ResponsiveContainer width="100%" height="100%"><BarChart data={salesPerformance} layout="vertical" margin={{ top: 8, right: 12, bottom: 4, left: 8 }}><CartesianGrid strokeDasharray="3 8" horizontal={false}/><XAxis type="number" axisLine={false} tickLine={false} tickFormatter={value=>fa(value)}/><YAxis type="category" dataKey="name" width={120} axisLine={false} tickLine={false}/><Tooltip formatter={value => [money(value), "فروش"]}/><Bar dataKey="revenue" fill="#8b5cf6" radius={[8,8,8,8]} maxBarSize={30}/></BarChart></ResponsiveContainer> : <EmptyState title="داده عملکرد کارشناسان موجود نیست" />}</div>
+          </ChartCard>}
           <ChartCard className="dashboardTrendChart" title="روند فروش" subtitle="فروش و تعداد فاکتور در بازه زمانی واقعی">
             <div className="chartBox">{salesTrend.length ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={salesTrend} margin={{top:8,right:8,bottom:4,left:4}}><defs><linearGradient id="dashboardSales" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#22d3ee" stopOpacity=".45"/><stop offset="1" stopColor="#22d3ee" stopOpacity="0"/></linearGradient></defs><CartesianGrid strokeDasharray="3 8" vertical={false}/><XAxis dataKey="name" axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={18}/><YAxis width={54} axisLine={false} tickLine={false} tick={{fill:"#8490ac",fontSize:9}} tickFormatter={value=>fa(value)}/><Tooltip formatter={(value, name) => [name === "sales" ? money(value) : fa(value), name === "sales" ? "فروش" : "فاکتور"]}/><Area type="monotone" dataKey="sales" stroke="#22d3ee" strokeWidth={3} fill="url(#dashboardSales)" fillOpacity={1} connectNulls dot={{r:4,fill:"#07111f",stroke:"#22d3ee",strokeWidth:2}} activeDot={{r:6,fill:"#22d3ee",stroke:"#ecfeff",strokeWidth:2}} isAnimationActive/><Area type="monotone" dataKey="invoices" stroke="#8b5cf6" strokeWidth={2} fill="transparent"/></AreaChart></ResponsiveContainer> : <EmptyState title="داده روند فروش موجود نیست" />}</div>
           </ChartCard>

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "verify:production": "npm run build && npm --prefix backend run build && node deploy/verify-production.cjs",
     "preview": "vite preview",
     "lint": "oxlint"
   },
@@ -19,7 +20,6 @@
     "axios": "^1.18.1",
     "chart.js": "^4.5.1",
     "lucide-react": "^1.30.0",
-    "multer": "^2.2.0",
     "react": "^19.2.7",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.7",

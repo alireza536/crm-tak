@@ -1,5 +1,5 @@
 import { useState, type ComponentType } from "react";
-import { BarChart3, ChevronDown, ChevronLeft, CircleHelp, CreditCard, FileBarChart, FileCheck2, FileText, FileUp, Gauge, Headphones, LogOut, Menu, Settings, ShoppingCart, SlidersHorizontal, UserCog, UserPlus, Users, UsersRound, WalletCards, X } from "lucide-react";
+import { BarChart3, ChevronDown, ChevronLeft, CircleHelp, CreditCard, FileBarChart, FileCheck2, FileText, FileUp, Gauge, Headphones, LogOut, Menu, Settings, ShoppingCart, SlidersHorizontal, UserCheck, UserCog, UserPlus, Users, UsersRound, WalletCards, X } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { clearSession, getCurrentUser, type UserRole } from "../utils/auth";
 import "./Sidebar.css";
@@ -8,24 +8,25 @@ type Item={title:string;path?:string;icon:ComponentType<{size?:number}>;roles:Us
 const menu:Item[]=[
  {title:"داشبورد",path:"/",icon:Gauge,roles:["ADMIN","SALES"]},
  {title:"مشتریان",icon:Users,roles:["ADMIN","SALES"],children:[
-   {title:"همه مشتریان",path:"/customers",icon:Users,roles:["ADMIN","SALES"]},
+   {title:"همه مشتریان",path:"/customers",icon:Users,roles:["ADMIN"]},
+   {title:"مشتریان من",path:"/customers/my",icon:UserCheck,roles:["SALES"]},
    {title:"مشتریان آزاد",path:"/customers/free",icon:UsersRound,roles:["ADMIN","SALES"]},
    {title:"آپلود مشتریان",path:"/customers/upload",icon:UserPlus,roles:["ADMIN"]},
  ]},
- {title:"فروش‌ها",path:"/sales",icon:ShoppingCart,roles:["ADMIN","SALES"]},
- {title:"پیش‌فاکتورها",path:"/quotations",icon:FileCheck2,roles:["ADMIN","SALES"]},
+ {title:"فروش‌ها",path:"/sales",icon:ShoppingCart,roles:["ADMIN"]},
+ {title:"پیش‌فاکتورها",path:"/quotations",icon:FileCheck2,roles:["ADMIN"]},
  {title:"فاکتورها",path:"/invoices",icon:FileText,roles:["ADMIN","SALES"]},
  {title:"پرداخت‌ها",path:"/payments",icon:CreditCard,roles:["ADMIN","SALES"]},
- {title:"گزارش مالی",path:"/financial-reports",icon:WalletCards,roles:["ADMIN","SALES"]},
- {title:"پیگیری‌ها",path:"/follow-ups",icon:CircleHelp,roles:["SALES"]},
- {title:"گزارش فروش",icon:FileBarChart,roles:["ADMIN","SALES"],children:[
-   {title:"مشاهده گزارش‌ها",path:"/reports",icon:FileBarChart,roles:["ADMIN","SALES"]},
+ {title:"گزارش مالی",path:"/financial-reports",icon:WalletCards,roles:["ADMIN"]},
+ {title:"پیگیری مشتریان",path:"/follow-ups",icon:CircleHelp,roles:["ADMIN","SALES"]},
+ {title:"گزارش فروش",icon:FileBarChart,roles:["ADMIN"],children:[
+   {title:"مشاهده گزارش‌ها",path:"/reports",icon:FileBarChart,roles:["ADMIN"]},
    {title:"Upload Sales",path:"/reports/upload",icon:FileUp,roles:["ADMIN"]},
  ]},
- {title:"کارشناسان",path:"/agents",icon:UsersRound,roles:["ADMIN"]},
- {title:"تنظیمات",path:"/settings",icon:Settings,roles:["ADMIN","SALES"]},
+ {title:"عملکرد کارشناسان",path:"/agents",icon:UsersRound,roles:["ADMIN","SALES"]},
+ {title:"تنظیمات",path:"/settings",icon:Settings,roles:["ADMIN"]},
  {title:"مدیریت کاربران",path:"/users",icon:UserCog,roles:["ADMIN"]},
- {title:"پشتیبانی",icon:Headphones,roles:["ADMIN","SALES"],soon:true},
+ {title:"پشتیبانی",icon:Headphones,roles:["ADMIN"],soon:true},
 ];
 export default function Sidebar(){
  const user=getCurrentUser(),location=useLocation(),navigate=useNavigate();

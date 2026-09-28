@@ -6,7 +6,12 @@
 .dashboardChartsGrid{display:grid;grid-template-columns:1.25fr 1fr .8fr;grid-template-areas:"trend monthly finance";gap:14px;align-items:stretch}
 .dashboardChartsGrid>article{min-width:0}
 .dashboardTrendChart{grid-area:trend}.dashboardMonthlyChart{grid-area:monthly}.dashboardFinanceChart{grid-area:finance}
+.dashboardPerformanceChart{grid-area:performance}
+.dashboardChartsGrid--admin{grid-template-columns:1fr 1fr;grid-template-areas:"performance performance" "trend monthly" "finance finance"}
+.dashboardWelcome{box-sizing:border-box;max-height:320px;transition:opacity .55s ease,transform .55s ease,filter .55s ease,max-height .6s ease,min-height .6s ease,padding .6s ease,border-width .6s ease;will-change:opacity,transform,max-height}
+.dashboardWelcome--leaving,.dashboardWelcome--hidden{min-height:0;max-height:0;padding-top:0;padding-bottom:0;border-width:0;opacity:0;transform:translateY(-18px);filter:blur(2px);pointer-events:none}
+.dashboardWelcome--hidden{visibility:hidden}
 .dashboardChartsGrid .chartBox{box-sizing:border-box;width:100%;height:300px;overflow:hidden;padding:4px 2px 0}.dashboardFinanceChart .financialDonut{display:flex;height:300px;min-height:300px;align-items:stretch}.dashboardFinanceChart .financialDonutChart{width:100%;min-height:0;flex:1;overflow:hidden}.dashboardFinanceChart .financialLegend{flex:0 0 auto}
-@media(max-width:1300px){.dashboardKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboardKpiGrid>.uiStat,.dashboardKpiGrid>.uiStat:nth-child(n+5){grid-column:auto}.dashboardChartsGrid{grid-template-columns:1fr 1fr;grid-template-areas:"trend monthly" "finance finance"}}
-@media(max-width:900px){.dashboardKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboardChartsGrid{grid-template-columns:1fr;grid-template-areas:"trend" "monthly" "finance"}}
+@media(max-width:1300px){.dashboardKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboardKpiGrid>.uiStat,.dashboardKpiGrid>.uiStat:nth-child(n+5){grid-column:auto}.dashboardChartsGrid{grid-template-columns:1fr 1fr;grid-template-areas:"trend monthly" "finance finance"}.dashboardChartsGrid--admin{grid-template-areas:"performance performance" "trend monthly" "finance finance"}}
+@media(max-width:900px){.dashboardKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboardChartsGrid{grid-template-columns:1fr;grid-template-areas:"trend" "monthly" "finance"}.dashboardChartsGrid--admin{grid-template-areas:"performance" "trend" "monthly" "finance"}}
 @media(max-width:600px){.dashboardKpiGrid{grid-template-columns:1fr}}

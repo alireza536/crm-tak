@@ -31,6 +31,15 @@ export class Customer {
   @Column({ type: 'text', nullable: true })
   address: string | null;
 
+  @Column({ type: 'date', nullable: true })
+  dateOfBirth: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  smsMarketingOptIn: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  smsMarketingConsentAt: Date | null;
+
   @Column({ type: 'text', nullable: true, unique: true })
   nationalCode: string | null;
 

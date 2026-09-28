@@ -81,6 +81,7 @@ export class CustomersService {
     for (let index = 0; index < rows.length; index++) {
       const row = rows[index];
       if (!row.name) row.errors.push('\u0646\u0627\u0645 \u0645\u0634\u062a\u0631\u06cc \u0627\u0644\u0632\u0627\u0645\u06cc \u0627\u0633\u062a');
+      if (row.dateOfBirth) { try { this.optionalDate(row.dateOfBirth); } catch { row.errors.push('dateOfBirth is invalid'); } }
       if (row.phone) {
         if (!/^\d{7,11}$/.test(row.phone)) row.errors.push('\u0641\u0631\u0645\u062a \u0634\u0645\u0627\u0631\u0647 \u062a\u0645\u0627\u0633 \u0645\u0639\u062a\u0628\u0631 \u0646\u06cc\u0633\u062a');
         else if (existingPhones.has(row.phone)) row.errors.push('\u0634\u0645\u0627\u0631\u0647 \u062a\u0645\u0627\u0633 \u0642\u0628\u0644\u0627\u064b \u062b\u0628\u062a \u0634\u062f\u0647 \u0627\u0633\u062a');
@@ -122,6 +123,7 @@ export class CustomersService {
           errors.push({ row: row.rowNumber, message: '\u0646\u0627\u0645 \u0645\u0634\u062a\u0631\u06cc \u0627\u0644\u0632\u0627\u0645\u06cc \u0627\u0633\u062a' });
           continue;
         }
+        try { this.optionalDate(row.dateOfBirth); } catch { errors.push({ row: row.rowNumber, message: 'dateOfBirth is invalid' }); continue; }
         if (row.phone && seen.has(row.phone)) {
           errors.push({ row: row.rowNumber, message: '\u0634\u0645\u0627\u0631\u0647 \u062a\u0645\u0627\u0633 \u062f\u0631 \u0641\u0627\u06cc\u0644 \u062a\u06a9\u0631\u0627\u0631\u06cc \u0627\u0633\u062a' });
           continue;
@@ -148,6 +150,7 @@ export class CustomersService {
           province: row.province || null,
           city: row.city || null,
           address: row.address || null,
+          dateOfBirth: this.optionalDate(row.dateOfBirth),
           nationalCode: row.nationalCode || null,
           customerType: row.customerType || 'NORMAL',
           status: 'FREE',
@@ -263,6 +266,7 @@ export class CustomersService {
         province: data.province ?? null,
         city: data.city ?? null,
         address: data.address ?? null,
+        dateOfBirth: this.optionalDate(data.dateOfBirth),
         nationalCode: data.nationalCode ?? null,
         description: data.description ?? null,
         status: salespersonId === null ? 'FREE' : 'ASSIGNED',
@@ -298,11 +302,16 @@ export class CustomersService {
       const customer = await this.requireAccessibleCustomer(id, user, manager);
       this.validateCustomerUpdate(data);
       if (data.phone !== undefined) await this.ensurePhoneAvailable(data.phone, id, manager);
+      const consentRevoked = data.phone !== undefined && data.phone.trim() !== customer.phone && customer.smsMarketingOptIn;
+      if (data.phone !== undefined && data.phone.trim() !== customer.phone) {
+        customer.smsMarketingOptIn = false;
+        customer.smsMarketingConsentAt = null;
+      }
       const editableFields = [
-        'name', 'storeName', 'phone', 'province', 'city', 'address', 'nationalCode', 'description',
+        'name', 'storeName', 'phone', 'province', 'city', 'address', 'dateOfBirth', 'nationalCode', 'description',
         'customerType', 'initialScore', 'healthScore',
       ] as const;
-      const changedFields: string[] = [];
+      const changedFields: string[] = consentRevoked ? ['smsMarketingOptIn'] : [];
       if (user.role === 'ADMIN' && data.status !== undefined) {
         customer.status = data.status;
         changedFields.push('status');
@@ -312,7 +321,9 @@ export class CustomersService {
         if (data[field] !== undefined) {
           (customer as any)[field] = ['initialScore', 'healthScore'].includes(field)
             ? Number(data[field])
-            : ['name', 'phone'].includes(field)
+            : field === 'dateOfBirth'
+              ? this.optionalDate(data[field])
+              : ['name', 'phone'].includes(field)
               ? data[field].trim()
               : data[field];
           changedFields.push(field);
@@ -396,6 +407,18 @@ export class CustomersService {
     }));
   }
 
+  async setSmsConsent(id: number, optIn: unknown, user: AuthenticatedUser) {
+    if (typeof optIn !== 'boolean') throw new BadRequestException('optIn must be true or false');
+    return this.dataSource.transaction(async (manager) => {
+      const customer = await this.requireAccessibleCustomer(id, user, manager);
+      customer.smsMarketingOptIn = optIn;
+      customer.smsMarketingConsentAt = optIn ? new Date() : null;
+      await manager.getRepository(Customer).save(customer);
+      await this.addHistory(manager, id, user.id, 'SMS_CONSENT', optIn ? 'Customer consented to marketing SMS' : 'Customer withdrew marketing SMS consent');
+      return { id: customer.id, smsMarketingOptIn: customer.smsMarketingOptIn, smsMarketingConsentAt: customer.smsMarketingConsentAt };
+    });
+  }
+
   async addNote(customerId: number, data: any, user: AuthenticatedUser) {
     const customer = await this.customers.findOneBy(this.accessibleWhere(customerId, user));
     if (!customer) throw new NotFoundException('Customer not found');
@@ -469,6 +492,13 @@ export class CustomersService {
     return parsed;
   }
 
+  private optionalDate(value: unknown): string | null {
+    if (value === undefined || value === null || value === '') return null;
+    const parsed = new Date(String(value));
+    if (Number.isNaN(parsed.getTime())) throw new BadRequestException('dateOfBirth must be a valid date');
+    return parsed.toISOString().slice(0, 10);
+  }
+
   private validateRequiredCustomerFields(data: any) {
     if (typeof data.name !== 'string' || !data.name.trim()) {
       throw new BadRequestException('name is required');
@@ -531,6 +561,7 @@ export class CustomersService {
       province: ['province', '\u0627\u0633\u062a\u0627\u0646'],
       city: ['city', '\u0634\u0647\u0631'],
       address: ['address', '\u0622\u062f\u0631\u0633'],
+      dateOfBirth: ['dateOfBirth', 'date of birth', 'birthday', 'birth date', '\u062a\u0627\u0631\u06cc\u062e \u062a\u0648\u0644\u062f', '\u0645\u062a\u0648\u0644\u062f'],
       nationalCode: ['nationalCode', 'nationalcode', 'national code', 'national_code', '\u06a9\u062f \u0645\u0644\u06cc'],
       status: ['status', '\u0648\u0636\u0639\u06cc\u062a'],
       customerType: ['customerType', 'customer type', 'customer_type', 'type', '\u0646\u0648\u0639 \u0645\u0634\u062a\u0631\u06cc'],
@@ -572,6 +603,7 @@ export class CustomersService {
       province: read('province'),
       city: read('city'),
       address: read('address'),
+      dateOfBirth: read('dateOfBirth'),
       nationalCode: latinDigits(read('nationalCode')).replace(/[^\d]/g, ''),
       status: 'FREE',
       customerType: read('customerType').toUpperCase() || 'NORMAL',

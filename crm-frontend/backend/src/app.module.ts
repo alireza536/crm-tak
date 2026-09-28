@@ -25,13 +25,17 @@ import { HealthController } from './health.controller';
 import { SalesPerformanceModule } from './sales-performance/sales-performance.module';
 import { SalesCommission } from './entities/sales-commission.entity';
 import { CreateSalesCommission1786845660000 } from './migrations/202608160002-CreateSalesCommission';
+import { CustomerIntelligence1786845660001 } from './migrations/202609280001-CustomerIntelligence';
+import { IntelligenceModule } from './intelligence/intelligence.module';
+import { MarketingModule } from './marketing/marketing.module';
+import { CampaignSmsDelivery1786845660002 } from './migrations/202609280002-CampaignSmsDelivery';
 @Module({
   imports:[
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: [User, Customer, CustomerHistory, CustomerImport, FollowUp, Sale, SalesReportImport, Invoice, Payment, Quotation, QuotationItem, SalesCommission],
-      migrations: [InitialProductionSchema1786233660000, CustomerInvoiceArchitecture1786320060000, NullableCustomerPhone1786323660000, CustomerOwnershipStatus1786327260000, AddUserAuthenticationColumns1786410060000, RepairUserAuthenticationSchema1786755660000, EnsureUserProfileColumns1786759260000, RepairCrmOperationalSchema1786762860000, AddFollowUpPriority1786842060000, CreateSalesCommission1786845660000],
+      migrations: [InitialProductionSchema1786233660000, CustomerInvoiceArchitecture1786320060000, NullableCustomerPhone1786323660000, CustomerOwnershipStatus1786327260000, AddUserAuthenticationColumns1786410060000, RepairUserAuthenticationSchema1786755660000, EnsureUserProfileColumns1786759260000, RepairCrmOperationalSchema1786762860000, AddFollowUpPriority1786842060000, CreateSalesCommission1786845660000, CustomerIntelligence1786845660001, CampaignSmsDelivery1786845660002],
       migrationsRun: process.env.TYPEORM_MIGRATIONS_RUN !== 'false',
       synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
       ssl: process.env.DATABASE_SSL === 'true'
@@ -54,6 +58,8 @@ import { CreateSalesCommission1786845660000 } from './migrations/202608160002-Cr
     DashboardModule,
     InvoiceDashboardModule,
     SalesPerformanceModule,
+    IntelligenceModule,
+    MarketingModule,
   ],
   controllers: [HealthController],
 })

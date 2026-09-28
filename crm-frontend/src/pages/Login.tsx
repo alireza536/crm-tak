@@ -1,7 +1,7 @@
 import axios from "axios";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { login, userFromLogin } from "../services/api";
+import { login, userFromLogin, warmUpServer } from "../services/api";
 import { getSession, saveSession } from "../utils/auth";
 import "./Login.css";
 
@@ -15,14 +15,25 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingHint, setLoadingHint] = useState("");
+
+  useEffect(() => {
+    // Wake Render as soon as the login page opens so it is ready before submit.
+    void warmUpServer().catch(() => undefined);
+  }, []);
 
   if (getSession()) return <Navigate to="/" replace />;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    let wakeTimer: number | undefined;
     try {
       setLoading(true);
       setError("");
+      setLoadingHint("");
+      wakeTimer = window.setTimeout(() => {
+        setLoadingHint("سرور در حال آماده‌سازی است؛ اولین ورود ممکن است کمی زمان ببرد.");
+      }, 5000);
       const normalizedPhone = latinDigits(phone).replace(/\D/g, "");
       const normalizedPassword = latinDigits(password).trim();
       const data = await login(normalizedPhone, normalizedPassword);
@@ -35,6 +46,8 @@ export default function Login() {
         setError("شماره تلفن یا رمز عبور اشتباه است.");
       }
     } finally {
+      if (wakeTimer !== undefined) window.clearTimeout(wakeTimer);
+      setLoadingHint("");
       setLoading(false);
     }
   }
@@ -48,6 +61,7 @@ export default function Login() {
         <label><span>شماره تلفن</span><input inputMode="tel" autoComplete="username" placeholder="09123456789" value={phone} onChange={event => setPhone(event.target.value)} required /></label>
         <label><span>رمز عبور</span><input type="password" autoComplete="current-password" placeholder="رمز عبور" value={password} onChange={event => setPassword(event.target.value)} required /></label>
         {error && <div className="loginError">{error}</div>}
+        {loadingHint && <div className="loginStatus" role="status"><i />{loadingHint}</div>}
         <button type="submit" disabled={loading}>{loading ? "در حال ورود..." : "ورود"}</button>
       </form>
     </div>

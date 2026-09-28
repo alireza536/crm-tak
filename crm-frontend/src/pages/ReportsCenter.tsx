@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Banknote, CalendarRange, FileText, ReceiptText, RefreshCw, Users } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ActionButton, ChartCard, EmptyState, GlassCard, PageHeader, StatCard } from "../components/ui/DesignSystem";
-import { getReportCharts, getReportSummary } from "../services/api";
+import { getCustomers, getReportCharts, getReportSummary, getSalesPerformance } from "../services/api";
 import { getCurrentUser } from "../utils/auth";
 import "./ReportsCenter.css";
 
@@ -40,6 +40,8 @@ export default function ReportsCenter(){
   const [charts,setCharts]=useState<Charts>(emptyCharts);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
+  const [salespersonId,setSalespersonId]=useState(""),[customerId,setCustomerId]=useState(""),[product,setProduct]=useState("");
+  const [salespeople,setSalespeople]=useState<Array<{userId:number;name:string}>>([]),[customers,setCustomers]=useState<Array<{id:number;name:string}>>([]);
   const range=useMemo(()=>periodRange(period,customStart,customEnd),[period,customStart,customEnd]);
   const trendData=period==="year"?charts.monthlySales:charts.dailySales;
   const trendLabel=period==="year"?"روند ماهانه فروش":"روند روزانه فروش";
@@ -50,13 +52,15 @@ export default function ReportsCenter(){
     if(period==="custom"&&(!range.start||!range.end))return;
     try{
       setLoading(true);setError("");
-      const [summaryData,chartData]=await Promise.all([getReportSummary(range.start,range.end),getReportCharts(range.start,range.end)]);
+      const filters={...(salespersonId?{salespersonId}:{}),...(customerId?{customerId}:{}),...(product.trim()?{product:product.trim()}: {})};
+      const [summaryData,chartData]=await Promise.all([getReportSummary(range.start,range.end,filters),getReportCharts(range.start,range.end,filters)]);
       setSummary(summaryData);setCharts(chartData);
     }catch(e){console.error(e);setError("دریافت گزارش‌های فروش انجام نشد.")}
     finally{setLoading(false)}
-  },[period,range.start,range.end]);
+  },[period,range.start,range.end,salespersonId,customerId,product]);
 
   useEffect(()=>{void load();const refresh=()=>void load();window.addEventListener("tak:sales-imported",refresh);return()=>window.removeEventListener("tak:sales-imported",refresh)},[load]);
+  useEffect(()=>{void Promise.all([getCustomers(),user?.role==="ADMIN"?getSalesPerformance():Promise.resolve([])]).then(([c,s])=>{setCustomers(c);setSalespeople(s)})},[user?.role]);
 
   const noData=<EmptyState title="داده فروش برای این بازه وجود ندارد" description="بازه دیگری انتخاب کنید یا گزارش فروش جدیدی وارد کنید."/>;
   return <main className="reportsPage executiveReports" dir="rtl">
@@ -64,6 +68,7 @@ export default function ReportsCenter(){
     <GlassCard className="reportControls">
       <div className="periodSelector">{(Object.keys(labels) as Period[]).map(key=><button type="button" key={key} className={period===key?"active":""} onClick={()=>setPeriod(key)}>{labels[key]}</button>)}</div>
       {period==="custom"&&<div className="customDates"><label>از<input type="date" value={customStart} onChange={event=>setCustomStart(event.target.value)}/></label><label>تا<input type="date" value={customEnd} onChange={event=>setCustomEnd(event.target.value)}/></label></div>}
+      <div className="customDates">{user?.role==="ADMIN"&&<label>کارشناس<select value={salespersonId} onChange={e=>setSalespersonId(e.target.value)}><option value="">همه کارشناسان</option>{salespeople.map(x=><option value={x.userId} key={x.userId}>{x.name}</option>)}</select></label>}<label>مشتری<select value={customerId} onChange={e=>setCustomerId(e.target.value)}><option value="">همه مشتریان</option>{customers.map(x=><option value={x.id} key={x.id}>{x.name}</option>)}</select></label><label>محصول<input value={product} onChange={e=>setProduct(e.target.value)} placeholder="نام یا کد محصول"/></label></div>
       <span className="reportDatabaseBadge"><CalendarRange/> داده زنده دیتابیس</span>
     </GlassCard>
     {error?<EmptyState title="گزارش بارگذاری نشد" description={error}/>:<>
