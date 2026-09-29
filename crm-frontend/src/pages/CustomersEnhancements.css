@@ -1,4 +1,7 @@
 .customerSegmentFilters{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.customerPagination{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 0 2px;color:#aeb8cb;font-size:12px}
+.customerPagination button{padding:8px 14px;border:1px solid var(--ui-line);border-radius:10px;background:rgba(255,255,255,.04);color:inherit;font:inherit;cursor:pointer}
+.customerPagination button:disabled{opacity:.45;cursor:not-allowed}
 .customerSegmentFilters button{padding:8px 12px;border:1px solid var(--ui-line);border-radius:10px;background:rgba(255,255,255,.025);color:#8793aa;font:inherit;font-size:9px;cursor:pointer;transition:.2s}
 .customerSegmentFilters button:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.3);color:#c4b5fd}
 .customerSegmentFilters button.active{border-color:rgba(139,92,246,.48);background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(59,130,246,.12));color:#f4f1ff;box-shadow:0 0 18px rgba(139,92,246,.12)}

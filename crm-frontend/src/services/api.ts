@@ -158,9 +158,12 @@ export async function releaseCustomer(id: number) {
 }
 
 export async function getSalesUsers() {
-  const users = (await api.get<Array<{ id: number; name: string; phone: string; role: string }>>("/users")).data;
+  const users = await getUsers();
   return users.filter(user => user.role === "SALES");
 }
+
+export type UserRecord={id:number;name:string;phone:string;role:"ADMIN"|"SALES";createdAt:string};
+export async function getUsers(){return(await api.get<UserRecord[]>("/users")).data}
 
 export async function getCustomerProfile(id: number) {
   return (await api.get(`/customers/${id}`)).data;

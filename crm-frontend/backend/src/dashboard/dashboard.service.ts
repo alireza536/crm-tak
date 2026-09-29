@@ -120,7 +120,9 @@ export class DashboardService {
       paymentQuery.clone().getCount(),
       invoiceQuery.clone().select('COALESCE(SUM(invoice.total), 0)', 'personalRevenue').getRawOne<{ personalRevenue: string }>(),
       paymentQuery.clone().select('COALESCE(SUM(payment.amount), 0)', 'received').getRawOne<{ received: string }>(),
-      invoiceQuery.clone().orderBy('COALESCE(invoice.invoiceDate, invoice.createdAt)', 'DESC').take(10).getMany(),
+      // Keep ordering on a mapped column: TypeORM cannot combine a raw COALESCE
+      // expression with its pagination query for joined entities.
+      invoiceQuery.clone().orderBy('invoice.createdAt', 'DESC').take(10).getMany(),
       this.followUps.createQueryBuilder('followUp')
         .innerJoinAndSelect('followUp.customer', 'customer')
         .where('customer.salespersonId = :userId', { userId })
