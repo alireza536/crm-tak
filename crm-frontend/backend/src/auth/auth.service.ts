@@ -28,8 +28,10 @@ export class AuthService {
     const normalizedPhone = toLatinDigits(phone)
       .replace(/\D/g, '');
 
-    const normalizedPassword = toLatinDigits(password)
-      .trim();
+    // Passwords are opaque secrets: do not trim or rewrite their characters.
+    // Phone numbers may be normalized for lookup, but password comparison must
+    // use exactly the value the user supplied when the password was created.
+    const normalizedPassword = String(password ?? '');
 
 
     const user = await this.users.findOne({
